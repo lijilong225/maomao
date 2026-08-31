@@ -76,6 +76,13 @@ object CoreBridge : Delegate {
     /** Throws on invalid configuration; the caller should surface the message verbatim. */
     fun validateConfig(configPath: String) = Bridge.validateConfig(configPath)
 
+    /** Normalizes a raw subscription body (YAML or share links) into mihomo YAML. */
+    fun convertSubscription(raw: String): String = Bridge.convertSubscription(raw)
+
+    /** Deep-merges a user override patch onto a base config. */
+    fun mergeConfig(baseYaml: String, patchYaml: String): String =
+        Bridge.mergeConfig(baseYaml, patchYaml)
+
     /**
      * TUN parameters derived from the config. The core narrows fake-ip-range to a
      * /30 and ignores host overrides, so the VpnService builder must mirror these.

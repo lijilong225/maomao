@@ -95,6 +95,29 @@ class MaomaoPlugin :
                 }
             }
 
+            "convertSubscription" -> {
+                val raw = call.argument<String>("raw")
+                if (raw == null) {
+                    result.error("invalid_argument", "raw is required", null)
+                    return
+                }
+                try {
+                    result.success(CoreBridge.convertSubscription(raw))
+                } catch (e: Exception) {
+                    result.error("invalid_subscription", e.message, null)
+                }
+            }
+
+            "mergeConfig" -> {
+                val base = call.argument<String>("base") ?: ""
+                val patch = call.argument<String>("patch") ?: ""
+                try {
+                    result.success(CoreBridge.mergeConfig(base, patch))
+                } catch (e: Exception) {
+                    result.error("invalid_config", e.message, null)
+                }
+            }
+
             "start" -> start(call, result)
 
             "stop" -> {
