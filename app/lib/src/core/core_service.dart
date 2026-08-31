@@ -54,6 +54,11 @@ class CoreService {
     return true;
   }
 
+  /// Applies a new config to an already running tunnel. The platform service
+  /// reloads the core in place, so the TUN interface is never re-established
+  /// and only [StartRequest.configPath] takes effect.
+  Future<void> reload(StartRequest request) => _channel.start(request);
+
   Future<void> stop() => _channel.stop();
 
   Future<Traffic> traffic() => _channel.traffic();
