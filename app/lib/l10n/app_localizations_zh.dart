@@ -92,6 +92,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proxiesPreviewOnly => '当前配置的预览。连接后可切换节点并测速。';
 
   @override
+  String get proxiesMembersUnavailable => '成员需在配置更新一次后才可查看。';
+
+  @override
   String get testLatency => '测试延迟';
 
   @override

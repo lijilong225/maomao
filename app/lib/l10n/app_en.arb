@@ -41,6 +41,7 @@
   },
   "proxiesEmpty": "Connect to load policy groups.",
   "proxiesPreviewOnly": "Preview of the selected profile. Connect to switch nodes and test latency.",
+  "proxiesMembersUnavailable": "Members are known only after the profile has been updated once.",
   "testLatency": "Test latency",
   "latencyTestFailed": "Latency test failed: every node timed out.",
 

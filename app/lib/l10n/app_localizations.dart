@@ -254,6 +254,12 @@ abstract class AppLocalizations {
   /// **'Preview of the selected profile. Connect to switch nodes and test latency.'**
   String get proxiesPreviewOnly;
 
+  /// No description provided for @proxiesMembersUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Members are known only after the profile has been updated once.'**
+  String get proxiesMembersUnavailable;
+
   /// No description provided for @testLatency.
   ///
   /// In en, this message translates to:

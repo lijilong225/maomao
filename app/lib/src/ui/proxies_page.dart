@@ -103,6 +103,12 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
               onPressed: _testGroup,
             ),
       children: [
+        if (group.all.isEmpty)
+          ListTile(
+            dense: true,
+            enabled: false,
+            title: Text(AppLocalizations.of(context).proxiesMembersUnavailable),
+          ),
         for (final member in group.all)
           ListTile(
             dense: true,

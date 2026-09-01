@@ -37,8 +37,12 @@ class ProxyNode {
 
   bool get isGroup => all.isNotEmpty;
 
-  /// `Selector` groups are the only ones the user can switch directly.
-  bool get isSelectable => type == 'Selector';
+  /// Group types the core lets the user switch directly. These are exactly the
+  /// ones implementing `outboundgroup.SelectAble`; picking a member of an
+  /// automatic group pins it until the next reload.
+  static const selectableTypes = {'Selector', 'URLTest', 'Fallback'};
+
+  bool get isSelectable => selectableTypes.contains(type);
 
   int get latestDelay => history.isEmpty ? 0 : history.last.delay;
 

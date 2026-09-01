@@ -93,6 +93,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Preview of the selected profile. Connect to switch nodes and test latency.';
 
   @override
+  String get proxiesMembersUnavailable =>
+      'Members are known only after the profile has been updated once.';
+
+  @override
   String get testLatency => 'Test latency';
 
   @override

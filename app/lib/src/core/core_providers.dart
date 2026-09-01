@@ -22,6 +22,9 @@ final coreStateProvider = StreamProvider<CoreState>((ref) {
 
 final controllerClientProvider = StreamProvider<ControllerClient?>((ref) {
   final service = ref.watch(coreServiceProvider);
+  // A page can be the first thing to ask for the client, for example after a
+  // hot restart while the tunnel is already up, so pull the platform state.
+  service.refresh();
   return service.clients;
 });
 

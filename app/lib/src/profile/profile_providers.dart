@@ -7,6 +7,7 @@ import '../core/core_providers.dart';
 import 'config_outline.dart';
 import 'profile_models.dart';
 import 'profile_repository.dart';
+import 'provider_cache.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   final repository = ProfileRepository(
@@ -204,6 +205,10 @@ final profileControllerProvider =
       (ref) => ProfileController(ref.watch(profileRepositoryProvider)),
     );
 
+final providerCacheProvider = Provider<ProviderCache>(
+  (ref) => const ProviderCache(),
+);
+
 /// Policy groups of the active profile as declared in its config file.
 ///
 /// Only used while the core is down; once it runs the controller is the source
@@ -213,5 +218,10 @@ final activeProfileOutlineProvider = FutureProvider<ProxySnapshot>((ref) async {
   if (id == null) return ProxySnapshot.empty;
   final body = await ref.watch(profileRepositoryProvider).readBody(id);
   if (body == null) return ProxySnapshot.empty;
-  return parseConfigOutline(body);
+  // Groups built from `use:` or `include-all` only have members once the
+  // provider bodies the core already downloaded are read back.
+  final bodies = await ref
+      .watch(providerCacheProvider)
+      .read(parseConfigProviders(body));
+  return parseConfigOutline(body, providerBodies: bodies);
 });

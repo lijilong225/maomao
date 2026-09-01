@@ -30,7 +30,14 @@ class CoreService {
   Stream<CoreState> get states => _stateController.stream;
 
   /// Emits the live client on start and `null` on stop.
-  Stream<ControllerClient?> get clients => _clientController.stream;
+  ///
+  /// The current value is replayed to every listener: the underlying broadcast
+  /// controller only fires on transitions, so a page that mounts after the core
+  /// started would otherwise never see the client.
+  Stream<ControllerClient?> get clients async* {
+    yield _client;
+    yield* _clientController.stream;
+  }
 
   ControllerClient? get client => _client;
 
