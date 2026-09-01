@@ -1,5 +1,6 @@
 package com.maomao.proxy.maomao.core
 
+import android.content.Context
 import android.net.VpnService
 import android.os.Handler
 import android.os.Looper
@@ -42,16 +43,24 @@ object CoreBridge : Delegate {
 
     val version: String get() = Bridge.version()
 
-    /** Home directory for core assets: geoip/geosite databases, cache, fake-ip state. */
+    /**
+     * Prepares the core. The home directory holds its assets: geoip/geosite
+     * databases, cache and fake-ip state.
+     */
     @Synchronized
-    fun init(homeDir: File) {
+    fun init(context: Context) {
         if (initialized) return
+        val homeDir = File(context.filesDir, "core")
         homeDir.mkdirs()
         Bridge.init(homeDir.absolutePath)
         Bridge.registerDelegate(this)
         initialized = true
         lastState = Bridge.state()
+        SystemDns.start(context.applicationContext)
     }
+
+    /** Comma-separated resolver addresses; see [SystemDns] for why this is needed. */
+    fun setSystemDns(servers: String) = Bridge.setSystemDNS(servers)
 
     fun attachService(service: VpnService) {
         serviceRef = WeakReference(service)
@@ -129,7 +138,10 @@ object CoreBridge : Delegate {
 
     override fun protect(fd: Int): Boolean {
         // Without this the core's own sockets would be routed back into the tunnel.
-        return serviceRef.get()?.protect(fd) ?: false
+        // No service means no tunnel of ours to escape, and failing here would break
+        // every socket the core opens outside a session, e.g. config validation.
+        val service = serviceRef.get() ?: return true
+        return service.protect(fd)
     }
 
     override fun onState(state: String) {

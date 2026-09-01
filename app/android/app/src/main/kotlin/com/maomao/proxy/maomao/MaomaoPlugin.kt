@@ -16,7 +16,6 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
-import java.io.File
 
 /**
  * Bridges the Flutter layer to the embedded core and the VPN service.
@@ -41,7 +40,7 @@ class MaomaoPlugin :
     private var pendingPrepare: MethodChannel.Result? = null
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        CoreBridge.init(File(binding.applicationContext.filesDir, "core"))
+        CoreBridge.init(binding.applicationContext)
 
         methodChannel = MethodChannel(binding.binaryMessenger, METHOD_CHANNEL)
         methodChannel.setMethodCallHandler(this)

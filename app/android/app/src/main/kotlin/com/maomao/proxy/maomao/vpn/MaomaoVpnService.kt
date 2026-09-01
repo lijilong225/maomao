@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.maomao.proxy.maomao.core.CoreBridge
-import java.io.File
 import java.util.Timer
 import kotlin.concurrent.timerTask
 
@@ -31,7 +30,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
     override fun onCreate() {
         super.onCreate()
         notification = VpnNotification(this)
-        CoreBridge.init(File(filesDir, "core"))
+        CoreBridge.init(this)
         CoreBridge.attachService(this)
         CoreBridge.addListener(this)
     }

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/metacubex/mihomo/config"
@@ -92,6 +93,28 @@ func RegisterDelegate(d Delegate) {
 
 // Version reports the embedded mihomo version.
 func Version() string { return C.Version }
+
+// SetSystemDNS hands the platform resolvers to the core. On Android the core
+// cannot read /etc/resolv.conf, so without this every hostname the core resolves
+// outside the tunnel fails, including the geoip/geosite downloads that run while
+// a config is being parsed. servers is a comma-separated list of addresses; a
+// missing port defaults to 53. An empty value clears the list.
+func SetSystemDNS(servers string) {
+	var addrs []string
+	for _, raw := range strings.Split(servers, ",") {
+		addr := strings.TrimSpace(raw)
+		if addr == "" {
+			continue
+		}
+		// net.SplitHostPort rejects bare addresses, and IPv6 literals must stay
+		// bracketed for the core's own parsing.
+		if _, _, err := net.SplitHostPort(addr); err != nil {
+			addr = net.JoinHostPort(addr, "53")
+		}
+		addrs = append(addrs, addr)
+	}
+	updateSystemDNS(addrs)
+}
 
 // State reports the current core lifecycle state.
 func State() string {
