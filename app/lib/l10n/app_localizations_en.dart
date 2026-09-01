@@ -103,6 +103,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get latencyTestFailed => 'Latency test failed: every node timed out.';
 
   @override
+  String get menuProxyProviders => 'Proxy providers';
+
+  @override
+  String get menuRuleProviders => 'Rule providers';
+
+  @override
+  String get providersRequireCore => 'Connect to inspect providers.';
+
+  @override
+  String get providersEmpty => 'This profile declares no providers.';
+
+  @override
+  String get providersUpdateAll => 'Update all';
+
+  @override
+  String providerNodeCount(int count) {
+    return '$count nodes';
+  }
+
+  @override
+  String providerRuleCount(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String providerUpdateFailed(String name, String error) {
+    return '$name: $error';
+  }
+
+  @override
+  String providersUpdated(int count) {
+    return 'Updated $count providers.';
+  }
+
+  @override
+  String providersUpdatePartial(int done, int failed) {
+    return 'Updated $done, $failed failed.';
+  }
+
+  @override
+  String get providerNotUpdatable => 'Declared in the config file';
+
+  @override
   String get profilesEmpty => 'Add a subscription to get started.';
 
   @override
@@ -239,6 +282,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get applyToRunningTunnel => 'Apply to running tunnel';
+
+  @override
+  String get geoAssets => 'Static resources';
+
+  @override
+  String get geoAssetsSubtitle => 'GeoIP and GeoSite databases';
+
+  @override
+  String get geoAssetMissing => 'Not downloaded';
+
+  @override
+  String get geoAssetsUpdate => 'Update databases';
+
+  @override
+  String get geoAssetsUpdated => 'Databases updated.';
+
+  @override
+  String get geoAssetsRequireCore => 'Connect to update the databases.';
 
   @override
   String get language => 'Language';

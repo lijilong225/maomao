@@ -45,6 +45,45 @@
   "testLatency": "Test latency",
   "latencyTestFailed": "Latency test failed: every node timed out.",
 
+  "menuProxyProviders": "Proxy providers",
+  "menuRuleProviders": "Rule providers",
+  "providersRequireCore": "Connect to inspect providers.",
+  "providersEmpty": "This profile declares no providers.",
+  "providersUpdateAll": "Update all",
+  "providerNodeCount": "{count} nodes",
+  "@providerNodeCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "providerRuleCount": "{count} rules",
+  "@providerRuleCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "providerUpdateFailed": "{name}: {error}",
+  "@providerUpdateFailed": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "error": { "type": "String" }
+    }
+  },
+  "providersUpdated": "Updated {count} providers.",
+  "@providersUpdated": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "providersUpdatePartial": "Updated {done}, {failed} failed.",
+  "@providersUpdatePartial": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "providerNotUpdatable": "Declared in the config file",
+
   "profilesEmpty": "Add a subscription to get started.",
   "profileUpdated": "Updated {time}",
   "@profileUpdated": {
@@ -110,6 +149,13 @@
   "overrideHelper": "YAML patch merged onto every profile",
   "logLevel": "Log level",
   "applyToRunningTunnel": "Apply to running tunnel",
+
+  "geoAssets": "Static resources",
+  "geoAssetsSubtitle": "GeoIP and GeoSite databases",
+  "geoAssetMissing": "Not downloaded",
+  "geoAssetsUpdate": "Update databases",
+  "geoAssetsUpdated": "Databases updated.",
+  "geoAssetsRequireCore": "Connect to update the databases.",
 
   "language": "Language",
   "languageSystem": "System default",

@@ -6,6 +6,7 @@ import '../api/controller_client.dart';
 import '../api/controller_models.dart';
 import 'core_models.dart';
 import 'core_service.dart';
+import 'geo_assets.dart';
 
 final coreServiceProvider = Provider<CoreService>((ref) {
   final service = CoreService();
@@ -48,6 +49,30 @@ final proxiesProvider = FutureProvider<ProxySnapshot>((ref) async {
   if (client == null) return ProxySnapshot.empty;
   return client.snapshot();
 });
+
+final proxyProvidersProvider = FutureProvider<List<ProxyProviderInfo>>((
+  ref,
+) async {
+  final client = ref.watch(controllerClientProvider).valueOrNull;
+  if (client == null) return const [];
+  return client.proxyProviders();
+});
+
+final ruleProvidersProvider = FutureProvider<List<RuleProviderInfo>>((
+  ref,
+) async {
+  final client = ref.watch(controllerClientProvider).valueOrNull;
+  if (client == null) return const [];
+  return client.ruleProviders();
+});
+
+final geoAssetRepositoryProvider = Provider<GeoAssetRepository>(
+  (ref) => const GeoAssetRepository(),
+);
+
+final geoAssetsProvider = FutureProvider<List<GeoAsset>>(
+  (ref) => ref.watch(geoAssetRepositoryProvider).list(),
+);
 
 final connectionsProvider = StreamProvider<ConnectionSnapshot>((ref) {
   final client = ref.watch(controllerClientProvider).valueOrNull;

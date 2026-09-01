@@ -272,6 +272,72 @@ abstract class AppLocalizations {
   /// **'Latency test failed: every node timed out.'**
   String get latencyTestFailed;
 
+  /// No description provided for @menuProxyProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Proxy providers'**
+  String get menuProxyProviders;
+
+  /// No description provided for @menuRuleProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule providers'**
+  String get menuRuleProviders;
+
+  /// No description provided for @providersRequireCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to inspect providers.'**
+  String get providersRequireCore;
+
+  /// No description provided for @providersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'This profile declares no providers.'**
+  String get providersEmpty;
+
+  /// No description provided for @providersUpdateAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Update all'**
+  String get providersUpdateAll;
+
+  /// No description provided for @providerNodeCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} nodes'**
+  String providerNodeCount(int count);
+
+  /// No description provided for @providerRuleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} rules'**
+  String providerRuleCount(int count);
+
+  /// No description provided for @providerUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {error}'**
+  String providerUpdateFailed(String name, String error);
+
+  /// No description provided for @providersUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {count} providers.'**
+  String providersUpdated(int count);
+
+  /// No description provided for @providersUpdatePartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {done}, {failed} failed.'**
+  String providersUpdatePartial(int done, int failed);
+
+  /// No description provided for @providerNotUpdatable.
+  ///
+  /// In en, this message translates to:
+  /// **'Declared in the config file'**
+  String get providerNotUpdatable;
+
   /// No description provided for @profilesEmpty.
   ///
   /// In en, this message translates to:
@@ -523,6 +589,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Apply to running tunnel'**
   String get applyToRunningTunnel;
+
+  /// No description provided for @geoAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Static resources'**
+  String get geoAssets;
+
+  /// No description provided for @geoAssetsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'GeoIP and GeoSite databases'**
+  String get geoAssetsSubtitle;
+
+  /// No description provided for @geoAssetMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not downloaded'**
+  String get geoAssetMissing;
+
+  /// No description provided for @geoAssetsUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update databases'**
+  String get geoAssetsUpdate;
+
+  /// No description provided for @geoAssetsUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Databases updated.'**
+  String get geoAssetsUpdated;
+
+  /// No description provided for @geoAssetsRequireCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to update the databases.'**
+  String get geoAssetsRequireCore;
 
   /// No description provided for @language.
   ///

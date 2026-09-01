@@ -235,3 +235,74 @@ class MemoryUsage {
     oslimit: (json['oslimit'] as num?)?.toInt() ?? 0,
   );
 }
+
+/// Vehicle types whose content is fetched, so the core can refresh them.
+///
+/// `Compatible` wraps proxies written straight into the config file and
+/// `Inline` wraps a payload, neither of which has anything to re-download.
+const _fetchedVehicles = {'HTTP', 'File'};
+
+/// A `proxy-providers` entry as reported by `/providers/proxies`.
+class ProxyProviderInfo {
+  const ProxyProviderInfo({
+    required this.name,
+    required this.vehicleType,
+    required this.proxyCount,
+    this.updatedAt,
+  });
+
+  final String name;
+  final String vehicleType;
+  final int proxyCount;
+  final DateTime? updatedAt;
+
+  bool get isUpdatable => _fetchedVehicles.contains(vehicleType);
+
+  static ProxyProviderInfo fromJson(String name, Map<String, dynamic> json) =>
+      ProxyProviderInfo(
+        name: json['name'] as String? ?? name,
+        vehicleType: json['vehicleType'] as String? ?? 'Unknown',
+        proxyCount: (json['proxies'] as List<dynamic>? ?? const []).length,
+        updatedAt: _parseTime(json['updatedAt']),
+      );
+}
+
+/// A `rule-providers` entry as reported by `/providers/rules`.
+class RuleProviderInfo {
+  const RuleProviderInfo({
+    required this.name,
+    required this.behavior,
+    required this.format,
+    required this.vehicleType,
+    required this.ruleCount,
+    this.updatedAt,
+  });
+
+  final String name;
+  final String behavior;
+  final String format;
+  final String vehicleType;
+  final int ruleCount;
+  final DateTime? updatedAt;
+
+  bool get isUpdatable => _fetchedVehicles.contains(vehicleType);
+
+  static RuleProviderInfo fromJson(String name, Map<String, dynamic> json) =>
+      RuleProviderInfo(
+        name: json['name'] as String? ?? name,
+        behavior: json['behavior'] as String? ?? '',
+        format: json['format'] as String? ?? '',
+        vehicleType: json['vehicleType'] as String? ?? 'Unknown',
+        ruleCount: (json['ruleCount'] as num?)?.toInt() ?? 0,
+        updatedAt: _parseTime(json['updatedAt']),
+      );
+}
+
+/// Go marshals a never-set `time.Time` as year 1, which must not be shown as an
+/// update that happened two millennia ago.
+DateTime? _parseTime(Object? raw) {
+  if (raw is! String) return null;
+  final time = DateTime.tryParse(raw);
+  if (time == null || time.year < 2000) return null;
+  return time;
+}

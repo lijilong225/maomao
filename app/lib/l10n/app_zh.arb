@@ -35,6 +35,18 @@
   "testLatency": "测试延迟",
   "latencyTestFailed": "测速失败：所有节点均超时。",
 
+  "menuProxyProviders": "代理集合",
+  "menuRuleProviders": "规则集合",
+  "providersRequireCore": "连接后可查看集合。",
+  "providersEmpty": "当前配置未声明集合。",
+  "providersUpdateAll": "全部更新",
+  "providerNodeCount": "{count} 个节点",
+  "providerRuleCount": "{count} 条规则",
+  "providerUpdateFailed": "{name}：{error}",
+  "providersUpdated": "已更新 {count} 个集合。",
+  "providersUpdatePartial": "已更新 {done} 个，{failed} 个失败。",
+  "providerNotUpdatable": "在配置文件中声明",
+
   "profilesEmpty": "添加订阅后开始使用。",
   "profileUpdated": "更新于 {time}",
   "profileExpires": "{date} 到期",
@@ -80,7 +92,12 @@
   "overrideHelper": "合并到每个配置的 YAML 补丁",
   "logLevel": "日志级别",
   "applyToRunningTunnel": "应用到运行中的隧道",
-
+  "geoAssets": "静态资源",
+  "geoAssetsSubtitle": "GeoIP 与 GeoSite 数据库",
+  "geoAssetMissing": "尚未下载",
+  "geoAssetsUpdate": "更新数据库",
+  "geoAssetsUpdated": "数据库已更新。",
+  "geoAssetsRequireCore": "连接后可更新数据库。",
   "language": "语言",
   "languageSystem": "跟随系统",
 

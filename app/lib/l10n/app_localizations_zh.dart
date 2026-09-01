@@ -101,6 +101,49 @@ class AppLocalizationsZh extends AppLocalizations {
   String get latencyTestFailed => '测速失败：所有节点均超时。';
 
   @override
+  String get menuProxyProviders => '代理集合';
+
+  @override
+  String get menuRuleProviders => '规则集合';
+
+  @override
+  String get providersRequireCore => '连接后可查看集合。';
+
+  @override
+  String get providersEmpty => '当前配置未声明集合。';
+
+  @override
+  String get providersUpdateAll => '全部更新';
+
+  @override
+  String providerNodeCount(int count) {
+    return '$count 个节点';
+  }
+
+  @override
+  String providerRuleCount(int count) {
+    return '$count 条规则';
+  }
+
+  @override
+  String providerUpdateFailed(String name, String error) {
+    return '$name：$error';
+  }
+
+  @override
+  String providersUpdated(int count) {
+    return '已更新 $count 个集合。';
+  }
+
+  @override
+  String providersUpdatePartial(int done, int failed) {
+    return '已更新 $done 个，$failed 个失败。';
+  }
+
+  @override
+  String get providerNotUpdatable => '在配置文件中声明';
+
+  @override
   String get profilesEmpty => '添加订阅后开始使用。';
 
   @override
@@ -233,6 +276,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get applyToRunningTunnel => '应用到运行中的隧道';
+
+  @override
+  String get geoAssets => '静态资源';
+
+  @override
+  String get geoAssetsSubtitle => 'GeoIP 与 GeoSite 数据库';
+
+  @override
+  String get geoAssetMissing => '尚未下载';
+
+  @override
+  String get geoAssetsUpdate => '更新数据库';
+
+  @override
+  String get geoAssetsUpdated => '数据库已更新。';
+
+  @override
+  String get geoAssetsRequireCore => '连接后可更新数据库。';
 
   @override
   String get language => '语言';

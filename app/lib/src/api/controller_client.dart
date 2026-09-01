@@ -134,6 +134,48 @@ class ControllerClient {
         .toList();
   }
 
+  // -------------------------------------------------------------- providers
+
+  /// Entries declared under `proxy-providers:`.
+  ///
+  /// The core also reports synthesized `Compatible` providers that merely hold
+  /// the proxies written inline in the config file; those are dropped.
+  Future<List<ProxyProviderInfo>> proxyProviders() async {
+    final data = await _get<Map<String, dynamic>>('/providers/proxies');
+    final raw = (data['providers'] as Map<String, dynamic>?) ?? const {};
+    return [
+      for (final entry in raw.entries)
+        if (entry.value is Map)
+          ProxyProviderInfo.fromJson(
+            entry.key,
+            (entry.value as Map).cast<String, dynamic>(),
+          ),
+    ]
+      ..removeWhere((provider) => provider.vehicleType == 'Compatible')
+      ..sort((a, b) => a.name.compareTo(b.name));
+  }
+
+  Future<List<RuleProviderInfo>> ruleProviders() async {
+    final data = await _get<Map<String, dynamic>>('/providers/rules');
+    final raw = (data['providers'] as Map<String, dynamic>?) ?? const {};
+    return [
+      for (final entry in raw.entries)
+        if (entry.value is Map)
+          RuleProviderInfo.fromJson(
+            entry.key,
+            (entry.value as Map).cast<String, dynamic>(),
+          ),
+    ]..sort((a, b) => a.name.compareTo(b.name));
+  }
+
+  /// Re-downloads a `proxy-providers` entry.
+  Future<void> updateProxyProvider(String name) =>
+      _request<void>('PUT', '/providers/proxies/${_seg(name)}');
+
+  /// Re-downloads a `rule-providers` entry.
+  Future<void> updateRuleProvider(String name) =>
+      _request<void>('PUT', '/providers/rules/${_seg(name)}');
+
   // ------------------------------------------------------------ connections
 
   Future<ConnectionSnapshot> connections() async {
@@ -155,6 +197,9 @@ class ControllerClient {
     final data = await _get<Map<String, dynamic>>('/version');
     return data['version'] as String? ?? '';
   }
+
+  /// Re-downloads every enabled geo database; the core has no per-file call.
+  Future<void> updateGeoDatabases() => _request<void>('POST', '/configs/geo');
 
   // ------------------------------------------------------------- WS streams
 

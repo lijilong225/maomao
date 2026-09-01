@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../core/core_models.dart';
 import '../core/core_providers.dart';
+import '../core/geo_assets.dart';
 import '../settings/app_settings.dart';
 import '../settings/settings_providers.dart';
 import '../tunnel/tunnel_controller.dart';
+import 'format.dart';
 
 /// Display name for each supported locale, shown in its own language.
 const _localeNames = {'en': 'English', 'zh': '简体中文'};
@@ -114,6 +116,14 @@ class SettingsPage extends ConsumerWidget {
         ),
         const Divider(),
         _SectionHeader(l10n.sectionDiagnostics),
+        ListTile(
+          title: Text(l10n.geoAssets),
+          subtitle: Text(l10n.geoAssetsSubtitle),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const _GeoAssetsPage()),
+          ),
+        ),
         ListTile(
           title: Text(l10n.logLevel),
           trailing: DropdownButton<LogLevel>(
@@ -267,4 +277,88 @@ class _OverrideEditorPageState extends ConsumerState<_OverrideEditorPage> {
       ),
     );
   }
+}
+
+class _GeoAssetsPage extends ConsumerStatefulWidget {
+  const _GeoAssetsPage();
+
+  @override
+  ConsumerState<_GeoAssetsPage> createState() => _GeoAssetsPageState();
+}
+
+class _GeoAssetsPageState extends ConsumerState<_GeoAssetsPage> {
+  bool _updating = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final live = ref.watch(controllerClientProvider).valueOrNull != null;
+    final assets = ref.watch(geoAssetsProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.geoAssets),
+        actions: [
+          if (_updating)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: l10n.geoAssetsUpdate,
+              onPressed: _update,
+            ),
+        ],
+      ),
+      body: ListView(
+        children: [
+          if (!live)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
+              child: Text(
+                l10n.geoAssetsRequireCore,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          for (final asset in assets.valueOrNull ?? const <GeoAsset>[])
+            ListTile(
+              title: Text(asset.name),
+              subtitle: Text(
+                asset.exists
+                    ? '${formatBytes(asset.size)} · ${l10n.profileUpdated(formatRelative(l10n, asset.updatedAt))}'
+                    : l10n.geoAssetMissing,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _update() async {
+    final client = ref.read(controllerClientProvider).valueOrNull;
+    final l10n = AppLocalizations.of(context);
+    if (client == null) {
+      _notify(l10n.geoAssetsRequireCore);
+      return;
+    }
+    setState(() => _updating = true);
+    try {
+      await client.updateGeoDatabases();
+      ref.invalidate(geoAssetsProvider);
+      if (mounted) _notify(l10n.geoAssetsUpdated);
+    } catch (error) {
+      if (mounted) _notify('$error');
+    } finally {
+      if (mounted) setState(() => _updating = false);
+    }
+  }
+
+  void _notify(String message) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(message)));
 }

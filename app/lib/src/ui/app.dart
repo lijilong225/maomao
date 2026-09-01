@@ -9,6 +9,7 @@ import '../settings/settings_providers.dart';
 import 'activity_page.dart';
 import 'dashboard_page.dart';
 import 'profiles_page.dart';
+import 'providers_page.dart';
 import 'proxies_page.dart';
 import 'settings_page.dart';
 
@@ -52,7 +53,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(titles[_index])),
+      appBar: AppBar(
+        title: Text(titles[_index]),
+        actions: [if (_index == 1) const ProvidersMenuButton()],
+      ),
       body: _pages[_index],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
