@@ -9,6 +9,13 @@ GOMOBILE ?= $(shell go env GOPATH)/bin/gomobile
 BUILD_TAGS ?= with_gvisor cmfa
 AAR_OUT ?= ../app/android/app/libs/maomao-core.aar
 
+# gomobile locates gobind through PATH.
+export PATH := $(shell go env GOPATH)/bin:$(PATH)
+
+# constant.Version defaults to a stale placeholder, so inject the real one.
+MIHOMO_VERSION ?= $(shell go list -m -f '{{.Version}}' github.com/metacubex/mihomo)
+LDFLAGS ?= -s -w -X github.com/metacubex/mihomo/constant.Version=$(MIHOMO_VERSION)
+
 # arm64 first: it is the only ABI required for Play Store 16KB page-size compliance.
 ANDROID_TARGETS ?= android/arm64,android/arm,android/amd64
 
@@ -28,7 +35,7 @@ android:
 		-javapkg com.maomao.proxy \
 		-tags "$(BUILD_TAGS)" \
 		-trimpath \
-		-ldflags "-s -w" \
+		-ldflags "$(LDFLAGS)" \
 		-o $(AAR_OUT) \
 		./bridge
 
