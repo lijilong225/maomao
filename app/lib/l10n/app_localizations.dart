@@ -254,6 +254,12 @@ abstract class AppLocalizations {
   /// **'Test latency'**
   String get testLatency;
 
+  /// No description provided for @latencyTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Latency test failed: every node timed out.'**
+  String get latencyTestFailed;
+
   /// No description provided for @profilesEmpty.
   ///
   /// In en, this message translates to:

@@ -92,6 +92,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get testLatency => 'Test latency';
 
   @override
+  String get latencyTestFailed => 'Latency test failed: every node timed out.';
+
+  @override
   String get profilesEmpty => 'Add a subscription to get started.';
 
   @override

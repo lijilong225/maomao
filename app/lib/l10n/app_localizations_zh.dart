@@ -92,6 +92,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get testLatency => '测试延迟';
 
   @override
+  String get latencyTestFailed => '测速失败：所有节点均超时。';
+
+  @override
   String get profilesEmpty => '添加订阅后开始使用。';
 
   @override

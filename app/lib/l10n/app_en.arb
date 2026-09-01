@@ -41,6 +41,7 @@
   },
   "proxiesEmpty": "Connect to load policy groups.",
   "testLatency": "Test latency",
+  "latencyTestFailed": "Latency test failed: every node timed out.",
 
   "profilesEmpty": "Add a subscription to get started.",
   "profileUpdated": "Updated {time}",

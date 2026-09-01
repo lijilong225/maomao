@@ -56,6 +56,57 @@ class ProxyNode {
   );
 }
 
+/// Provider name the core reserves for everything declared inline in the
+/// config file. Its node list follows the config file order.
+const reservedProviderName = 'default';
+
+/// Merged view of `/proxies` and `/providers/proxies`.
+///
+/// `/proxies` is a Go map, so its JSON keys arrive sorted alphabetically and the
+/// config file order is lost. Nodes pulled from `proxy-providers` are missing
+/// from it altogether, which also hides their latency history.
+class ProxySnapshot {
+  const ProxySnapshot({required this.nodes, required this.groups});
+
+  static const empty = ProxySnapshot(nodes: {}, groups: []);
+
+  /// Every known node, including provider-backed ones.
+  final Map<String, ProxyNode> nodes;
+
+  /// Groups in config file order.
+  final List<ProxyNode> groups;
+
+  static ProxySnapshot merge({
+    required Map<String, ProxyNode> proxies,
+    required Map<String, List<ProxyNode>> providers,
+  }) {
+    final nodes = <String, ProxyNode>{};
+    for (final members in providers.values) {
+      for (final node in members) {
+        nodes[node.name] = node;
+      }
+    }
+    // `/proxies` wins on conflicts: it is the authoritative view of groups.
+    nodes.addAll(proxies);
+
+    final ranks = <String, int>{};
+    for (final node in providers[reservedProviderName] ?? const <ProxyNode>[]) {
+      ranks.putIfAbsent(node.name, () => ranks.length);
+    }
+    // Anything the reserved provider does not list (such as an implicit GLOBAL)
+    // goes last, ordered by name so the result stays deterministic.
+    int rankOf(ProxyNode node) => ranks[node.name] ?? ranks.length;
+
+    final groups = nodes.values.where((node) => node.isGroup).toList()
+      ..sort((a, b) {
+        final byConfig = rankOf(a).compareTo(rankOf(b));
+        return byConfig != 0 ? byConfig : a.name.compareTo(b.name);
+      });
+
+    return ProxySnapshot(nodes: nodes, groups: groups);
+  }
+}
+
 class ConnectionMetadata {
   const ConnectionMetadata({
     required this.network,

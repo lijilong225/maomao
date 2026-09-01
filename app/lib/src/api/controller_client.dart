@@ -64,6 +64,32 @@ class ControllerClient {
     return ProxyNode.fromJson(name, data);
   }
 
+  /// Nodes grouped by the provider that owns them.
+  ///
+  /// Nodes coming from `proxy-providers` never show up in [proxies], so their
+  /// latency history is only reachable here. The reserved `default` provider
+  /// lists everything declared inline in the config file, in config file order.
+  Future<Map<String, List<ProxyNode>>> providerProxies() async {
+    final data = await _get<Map<String, dynamic>>('/providers/proxies');
+    final raw = (data['providers'] as Map<String, dynamic>?) ?? const {};
+    return raw.map((name, value) {
+      final members = ((value as Map)['proxies'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map((json) => ProxyNode.fromJson(json['name'] as String? ?? '', json))
+          .toList();
+      return MapEntry(name, members);
+    });
+  }
+
+  /// Merged view of [proxies] and [providerProxies].
+  Future<ProxySnapshot> snapshot() async {
+    final results = await Future.wait([proxies(), providerProxies()]);
+    return ProxySnapshot.merge(
+      proxies: results[0] as Map<String, ProxyNode>,
+      providers: results[1] as Map<String, List<ProxyNode>>,
+    );
+  }
+
   /// Switches the member selected by a `Selector` group.
   Future<void> selectProxy(String groupName, String memberName) =>
       _request<void>(

@@ -40,10 +40,10 @@ final trafficProvider = StreamProvider<Traffic>((ref) {
   return client.trafficStream();
 });
 
-final proxiesProvider = FutureProvider<Map<String, ProxyNode>>((ref) async {
+final proxiesProvider = FutureProvider<ProxySnapshot>((ref) async {
   final client = ref.watch(controllerClientProvider).valueOrNull;
-  if (client == null) return const {};
-  return client.proxies();
+  if (client == null) return ProxySnapshot.empty;
+  return client.snapshot();
 });
 
 final connectionsProvider = StreamProvider<ConnectionSnapshot>((ref) {

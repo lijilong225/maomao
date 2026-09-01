@@ -31,6 +31,7 @@
   "proxiesUnavailable": "不可用：{error}",
   "proxiesEmpty": "连接后加载策略组。",
   "testLatency": "测试延迟",
+  "latencyTestFailed": "测速失败：所有节点均超时。",
 
   "profilesEmpty": "添加订阅后开始使用。",
   "profileUpdated": "更新于 {time}",
