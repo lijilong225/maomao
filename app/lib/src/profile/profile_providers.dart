@@ -126,6 +126,12 @@ class ProfileController extends StateNotifier<ProfileState> {
     await _upsert(profile.copyWith(overrideYaml: overrideYaml));
   }
 
+  Future<String?> readBody(String id) => _repository.readBody(id);
+
+  /// Persists a hand-edited config. Remote updates overwrite it.
+  Future<void> writeBody(String id, String content) =>
+      _repository.writeBody(id, content);
+
   Future<void> rename(String id, String name) async {
     final profile = _find(id);
     if (profile == null || name.isEmpty) return;

@@ -36,6 +36,7 @@
   "profileUpdated": "更新于 {time}",
   "profileExpires": "{date} 到期",
   "actionUpdate": "更新",
+  "actionEdit": "编辑",
   "actionDelete": "删除",
   "actionCancel": "取消",
   "actionAdd": "添加",
@@ -43,6 +44,9 @@
   "actionClose": "关闭",
   "addSubscription": "添加订阅",
   "subscriptionUrl": "链接",
+  "editProfile": "编辑配置",
+  "editProfileHelper": "从订阅链接更新会覆盖这里的修改",
+  "profileNotDownloaded": "该配置尚未下载。",
 
   "tabConnections": "连接",
   "tabLogs": "日志",

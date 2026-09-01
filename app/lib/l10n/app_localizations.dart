@@ -278,6 +278,12 @@ abstract class AppLocalizations {
   /// **'Update'**
   String get actionUpdate;
 
+  /// No description provided for @actionEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get actionEdit;
+
   /// No description provided for @actionDelete.
   ///
   /// In en, this message translates to:
@@ -319,6 +325,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'URL'**
   String get subscriptionUrl;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit config'**
+  String get editProfile;
+
+  /// No description provided for @editProfileHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating from the subscription URL overwrites these edits'**
+  String get editProfileHelper;
+
+  /// No description provided for @profileNotDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'This profile has not been downloaded yet.'**
+  String get profileNotDownloaded;
 
   /// No description provided for @tabConnections.
   ///

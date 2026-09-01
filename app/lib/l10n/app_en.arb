@@ -56,6 +56,7 @@
     }
   },
   "actionUpdate": "Update",
+  "actionEdit": "Edit",
   "actionDelete": "Delete",
   "actionCancel": "Cancel",
   "actionAdd": "Add",
@@ -63,6 +64,9 @@
   "actionClose": "Close",
   "addSubscription": "Add subscription",
   "subscriptionUrl": "URL",
+  "editProfile": "Edit config",
+  "editProfileHelper": "Updating from the subscription URL overwrites these edits",
+  "profileNotDownloaded": "This profile has not been downloaded yet.",
 
   "tabConnections": "Connections",
   "tabLogs": "Logs",

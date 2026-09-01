@@ -108,6 +108,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get actionUpdate => '更新';
 
   @override
+  String get actionEdit => '编辑';
+
+  @override
   String get actionDelete => '删除';
 
   @override
@@ -127,6 +130,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get subscriptionUrl => '链接';
+
+  @override
+  String get editProfile => '编辑配置';
+
+  @override
+  String get editProfileHelper => '从订阅链接更新会覆盖这里的修改';
+
+  @override
+  String get profileNotDownloaded => '该配置尚未下载。';
 
   @override
   String get tabConnections => '连接';

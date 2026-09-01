@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../profile/profile_models.dart';
 import '../profile/profile_providers.dart';
+import '../tunnel/tunnel_controller.dart';
 import 'format.dart';
 
 class ProfilesPage extends ConsumerWidget {
@@ -101,6 +102,10 @@ class _ProfileTile extends ConsumerWidget {
                           child: Text(l10n.actionUpdate),
                         ),
                       PopupMenuItem(
+                        value: 'edit',
+                        child: Text(l10n.actionEdit),
+                      ),
+                      PopupMenuItem(
                         value: 'delete',
                         child: Text(l10n.actionDelete),
                       ),
@@ -138,6 +143,8 @@ class _ProfileTile extends ConsumerWidget {
       switch (action) {
         case 'update':
           await controller.update(profile.id);
+        case 'edit':
+          await _openEditor(context, ref);
         case 'delete':
           await controller.remove(profile.id);
       }
@@ -148,6 +155,24 @@ class _ProfileTile extends ConsumerWidget {
         ).showSnackBar(SnackBar(content: Text('$error')));
       }
     }
+  }
+
+  Future<void> _openEditor(BuildContext context, WidgetRef ref) async {
+    final body = await ref
+        .read(profileControllerProvider.notifier)
+        .readBody(profile.id);
+    if (!context.mounted) return;
+    if (body == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).profileNotDownloaded)),
+      );
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _ProfileEditorPage(profile: profile, initialBody: body),
+      ),
+    );
   }
 }
 
@@ -191,6 +216,93 @@ class _UrlDialogState extends State<_UrlDialog> {
           child: Text(l10n.actionAdd),
         ),
       ],
+    );
+  }
+}
+
+class _ProfileEditorPage extends ConsumerStatefulWidget {
+  const _ProfileEditorPage({required this.profile, required this.initialBody});
+
+  final Profile profile;
+  final String initialBody;
+
+  @override
+  ConsumerState<_ProfileEditorPage> createState() => _ProfileEditorPageState();
+}
+
+class _ProfileEditorPageState extends ConsumerState<_ProfileEditorPage> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialBody,
+  );
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    String? failure;
+    try {
+      await ref
+          .read(profileControllerProvider.notifier)
+          .writeBody(widget.profile.id, _controller.text);
+      if (ref.read(profileControllerProvider).activeId == widget.profile.id) {
+        final tunnel = ref.read(tunnelControllerProvider.notifier);
+        await tunnel.applyConfigChanges();
+        // applyConfigChanges surfaces failures through its state, not by throwing.
+        failure = ref.read(tunnelControllerProvider).error;
+        if (failure != null) tunnel.clearError();
+      }
+    } catch (error) {
+      failure = '$error';
+    }
+    if (!mounted) return;
+    if (failure == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() => _saving = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.editProfile),
+        actions: [
+          IconButton(
+            icon: _saving
+                ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check),
+            tooltip: l10n.actionSave,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: TextField(
+          controller: _controller,
+          maxLines: null,
+          expands: true,
+          textAlignVertical: TextAlignVertical.top,
+          style: const TextStyle(fontFamily: 'monospace'),
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            alignLabelWithHint: true,
+            helperText: l10n.editProfileHelper,
+            helperMaxLines: 2,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -108,6 +108,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionUpdate => 'Update';
 
   @override
+  String get actionEdit => 'Edit';
+
+  @override
   String get actionDelete => 'Delete';
 
   @override
@@ -127,6 +130,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subscriptionUrl => 'URL';
+
+  @override
+  String get editProfile => 'Edit config';
+
+  @override
+  String get editProfileHelper =>
+      'Updating from the subscription URL overwrites these edits';
+
+  @override
+  String get profileNotDownloaded =>
+      'This profile has not been downloaded yet.';
 
   @override
   String get tabConnections => 'Connections';

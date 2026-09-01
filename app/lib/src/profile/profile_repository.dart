@@ -93,6 +93,19 @@ class ProfileRepository {
     return await file.exists() ? file.readAsString() : null;
   }
 
+  /// Replaces the stored body with user-edited YAML once the core accepts it.
+  /// A later remote update overwrites these edits.
+  Future<void> writeBody(String profileId, String content) async {
+    final draft = await _profileFile(profileId, 'draft.yaml');
+    await draft.writeAsString(content, flush: true);
+    try {
+      await channel.validateConfig(draft.path);
+    } finally {
+      if (await draft.exists()) await draft.delete();
+    }
+    await _writeBody(profileId, content);
+  }
+
   Future<void> delete(String profileId) async {
     final dir = Directory('${(await _profilesRoot()).path}/$profileId');
     if (await dir.exists()) await dir.delete(recursive: true);
