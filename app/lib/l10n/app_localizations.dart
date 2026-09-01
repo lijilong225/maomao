@@ -248,6 +248,12 @@ abstract class AppLocalizations {
   /// **'Connect to load policy groups.'**
   String get proxiesEmpty;
 
+  /// No description provided for @proxiesPreviewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview of the selected profile. Connect to switch nodes and test latency.'**
+  String get proxiesPreviewOnly;
+
   /// No description provided for @testLatency.
   ///
   /// In en, this message translates to:

@@ -89,6 +89,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proxiesEmpty => 'Connect to load policy groups.';
 
   @override
+  String get proxiesPreviewOnly =>
+      'Preview of the selected profile. Connect to switch nodes and test latency.';
+
+  @override
   String get testLatency => 'Test latency';
 
   @override

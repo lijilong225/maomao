@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../api/controller_models.dart';
 import '../core/core_providers.dart';
+import '../profile/profile_providers.dart';
 import 'format.dart';
 
 class ProxiesPage extends ConsumerWidget {
@@ -11,24 +12,40 @@ class ProxiesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final live = ref.watch(controllerClientProvider).valueOrNull != null;
+    final snapshot = live
+        ? ref.watch(proxiesProvider)
+        : ref.watch(activeProfileOutlineProvider);
     final l10n = AppLocalizations.of(context);
-    final proxies = ref.watch(proxiesProvider);
 
-    return proxies.when(
+    return snapshot.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _Message(text: l10n.proxiesUnavailable('$error')),
-      data: (snapshot) {
-        final groups = snapshot.groups;
+      data: (data) {
+        final groups = data.groups;
         if (groups.isEmpty) {
           return _Message(text: l10n.proxiesEmpty);
         }
         return RefreshIndicator(
-          onRefresh: () async => ref.invalidate(proxiesProvider),
+          onRefresh: () async => ref.invalidate(
+            live ? proxiesProvider : activeProfileOutlineProvider,
+          ),
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: groups.length,
-            itemBuilder: (context, index) =>
-                _GroupTile(group: groups[index], nodes: snapshot.nodes),
+            itemCount: groups.length + (live ? 0 : 1),
+            itemBuilder: (context, index) {
+              if (!live && index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+                  child: Text(
+                    l10n.proxiesPreviewOnly,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                );
+              }
+              final group = groups[live ? index : index - 1];
+              return _GroupTile(group: group, nodes: data.nodes, live: live);
+            },
           ),
         );
       },
@@ -37,10 +54,17 @@ class ProxiesPage extends ConsumerWidget {
 }
 
 class _GroupTile extends ConsumerStatefulWidget {
-  const _GroupTile({required this.group, required this.nodes});
+  const _GroupTile({
+    required this.group,
+    required this.nodes,
+    required this.live,
+  });
 
   final ProxyNode group;
   final Map<String, ProxyNode> nodes;
+
+  /// False while the core is down, which makes the list read-only.
+  final bool live;
 
   @override
   ConsumerState<_GroupTile> createState() => _GroupTileState();
@@ -51,13 +75,17 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
 
   ProxyNode get group => widget.group;
 
+  bool get _canSelect => widget.live && group.isSelectable;
+
   @override
   Widget build(BuildContext context) => Card(
     margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
     child: ExpansionTile(
       title: Text(group.name),
       subtitle: Text('${group.type} · ${group.now ?? '—'}'),
-      trailing: _testing
+      trailing: !widget.live
+          ? null
+          : _testing
           ? const SizedBox(
               width: 24,
               height: 24,
@@ -78,7 +106,7 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
         for (final member in group.all)
           ListTile(
             dense: true,
-            enabled: group.isSelectable,
+            enabled: _canSelect,
             leading: Icon(
               member == group.now
                   ? Icons.radio_button_checked
@@ -86,8 +114,10 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
               size: 20,
             ),
             title: Text(member),
-            trailing: Text(formatDelay(widget.nodes[member]?.latestDelay ?? 0)),
-            onTap: group.isSelectable ? () => _select(member) : null,
+            trailing: widget.live
+                ? Text(formatDelay(widget.nodes[member]?.latestDelay ?? 0))
+                : null,
+            onTap: _canSelect ? () => _select(member) : null,
           ),
       ],
     ),

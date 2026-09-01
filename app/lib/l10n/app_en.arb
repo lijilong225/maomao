@@ -40,6 +40,7 @@
     }
   },
   "proxiesEmpty": "Connect to load policy groups.",
+  "proxiesPreviewOnly": "Preview of the selected profile. Connect to switch nodes and test latency.",
   "testLatency": "Test latency",
   "latencyTestFailed": "Latency test failed: every node timed out.",
 

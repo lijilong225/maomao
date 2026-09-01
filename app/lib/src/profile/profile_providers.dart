@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../api/controller_models.dart';
 import '../core/core_providers.dart';
+import 'config_outline.dart';
 import 'profile_models.dart';
 import 'profile_repository.dart';
 
@@ -201,3 +203,15 @@ final profileControllerProvider =
     StateNotifierProvider<ProfileController, ProfileState>(
       (ref) => ProfileController(ref.watch(profileRepositoryProvider)),
     );
+
+/// Policy groups of the active profile as declared in its config file.
+///
+/// Only used while the core is down; once it runs the controller is the source
+/// of truth because it also resolves providers and holds latency history.
+final activeProfileOutlineProvider = FutureProvider<ProxySnapshot>((ref) async {
+  final id = ref.watch(profileControllerProvider).activeId;
+  if (id == null) return ProxySnapshot.empty;
+  final body = await ref.watch(profileRepositoryProvider).readBody(id);
+  if (body == null) return ProxySnapshot.empty;
+  return parseConfigOutline(body);
+});

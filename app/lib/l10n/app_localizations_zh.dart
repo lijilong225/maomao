@@ -89,6 +89,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proxiesEmpty => '连接后加载策略组。';
 
   @override
+  String get proxiesPreviewOnly => '当前配置的预览。连接后可切换节点并测速。';
+
+  @override
   String get testLatency => '测试延迟';
 
   @override
