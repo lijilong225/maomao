@@ -1,4 +1,9 @@
+import 'package:flutter/widgets.dart';
+
 import '../core/core_models.dart';
+
+/// Locales the UI ships translations for.
+const supportedLocales = [Locale('en'), Locale('zh')];
 
 /// User-wide settings, independent of any single profile.
 ///
@@ -13,6 +18,7 @@ class AppSettings {
     this.overrideYaml = '',
     this.autoUpdateOnLaunch = true,
     this.logLevel = LogLevel.info,
+    this.locale,
   });
 
   final TunStack tunStack;
@@ -29,6 +35,9 @@ class AppSettings {
   final bool autoUpdateOnLaunch;
   final LogLevel logLevel;
 
+  /// Null follows the system locale.
+  final Locale? locale;
+
   AppSettings copyWith({
     TunStack? tunStack,
     bool? ipv6,
@@ -38,6 +47,8 @@ class AppSettings {
     String? overrideYaml,
     bool? autoUpdateOnLaunch,
     LogLevel? logLevel,
+    Locale? locale,
+    bool clearLocale = false,
   }) => AppSettings(
     tunStack: tunStack ?? this.tunStack,
     ipv6: ipv6 ?? this.ipv6,
@@ -47,6 +58,7 @@ class AppSettings {
     overrideYaml: overrideYaml ?? this.overrideYaml,
     autoUpdateOnLaunch: autoUpdateOnLaunch ?? this.autoUpdateOnLaunch,
     logLevel: logLevel ?? this.logLevel,
+    locale: clearLocale ? null : locale ?? this.locale,
   );
 
   Map<String, dynamic> toJson() => {
@@ -58,6 +70,7 @@ class AppSettings {
     'overrideYaml': overrideYaml,
     'autoUpdateOnLaunch': autoUpdateOnLaunch,
     'logLevel': logLevel.name,
+    'locale': locale?.languageCode ?? '',
   };
 
   static AppSettings fromJson(Map<String, dynamic> json) => AppSettings(
@@ -74,5 +87,10 @@ class AppSettings {
     overrideYaml: json['overrideYaml'] as String? ?? '',
     autoUpdateOnLaunch: json['autoUpdateOnLaunch'] as bool? ?? true,
     logLevel: LogLevel.parse(json['logLevel'] as String? ?? 'info'),
+    locale: _parseLocale(json['locale'] as String? ?? ''),
   );
+
+  static Locale? _parseLocale(String tag) => supportedLocales
+      .where((locale) => locale.languageCode == tag)
+      .firstOrNull;
 }

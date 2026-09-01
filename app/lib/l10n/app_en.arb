@@ -1,0 +1,130 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "maomao",
+
+  "navHome": "Home",
+  "navProxies": "Proxies",
+  "navProfiles": "Profiles",
+  "navActivity": "Activity",
+  "navSettings": "Settings",
+
+  "titleDashboard": "Dashboard",
+  "titleProxies": "Proxies",
+  "titleProfiles": "Profiles",
+  "titleActivity": "Activity",
+  "titleSettings": "Settings",
+
+  "stateConnected": "Connected",
+  "stateConnecting": "Connecting…",
+  "stateDisconnected": "Disconnected",
+  "noProfileSelected": "No profile selected",
+  "trafficUpload": "Upload",
+  "trafficDownload": "Download",
+  "sessionTotal": "Session total",
+  "activeConnections": "Active connections",
+  "coreLabel": "Core",
+  "coreVersion": "mihomo {version}",
+  "@coreVersion": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "loading": "loading…",
+  "unavailable": "unavailable",
+
+  "proxiesUnavailable": "Unavailable: {error}",
+  "@proxiesUnavailable": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "proxiesEmpty": "Connect to load policy groups.",
+  "testLatency": "Test latency",
+
+  "profilesEmpty": "Add a subscription to get started.",
+  "profileUpdated": "Updated {time}",
+  "@profileUpdated": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "profileExpires": "expires {date}",
+  "@profileExpires": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "actionUpdate": "Update",
+  "actionDelete": "Delete",
+  "actionCancel": "Cancel",
+  "actionAdd": "Add",
+  "actionSave": "Save",
+  "actionClose": "Close",
+  "addSubscription": "Add subscription",
+  "subscriptionUrl": "URL",
+
+  "tabConnections": "Connections",
+  "tabLogs": "Logs",
+  "connectionsEmpty": "No active connections.",
+  "closeAllConnections": "Close all",
+  "logsEmpty": "No logs yet.",
+
+  "sectionTunnel": "Tunnel",
+  "sectionPerAppProxy": "Per-app proxy",
+  "sectionProfiles": "Profiles",
+  "sectionDiagnostics": "Diagnostics",
+  "sectionAppearance": "Appearance",
+
+  "tunStack": "TUN stack",
+  "ipv6": "IPv6",
+  "ipv6Subtitle": "Route IPv6 traffic through the tunnel",
+  "bypassPrivateRoutes": "Bypass private routes",
+  "bypassPrivateRoutesSubtitle": "Keep LAN traffic outside the tunnel",
+  "tunnelledApps": "Tunnelled apps",
+  "allApps": "All apps",
+  "appsSelected": "{count} selected",
+  "@appsSelected": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "tunnelAllApps": "Tunnel all apps",
+  "updateOnLaunch": "Update on launch",
+  "updateOnLaunchSubtitle": "Refresh subscriptions whose interval elapsed",
+  "globalOverride": "Global override",
+  "overrideNone": "None",
+  "overrideLines": "{count} lines",
+  "@overrideLines": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "overrideHelper": "YAML patch merged onto every profile",
+  "logLevel": "Log level",
+  "applyToRunningTunnel": "Apply to running tunnel",
+
+  "language": "Language",
+  "languageSystem": "System default",
+
+  "relativeNever": "never",
+  "relativeJustNow": "just now",
+  "relativeMinutesAgo": "{count}m ago",
+  "@relativeMinutesAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "relativeHoursAgo": "{count}h ago",
+  "@relativeHoursAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "relativeDaysAgo": "{count}d ago",
+  "@relativeDaysAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
+}

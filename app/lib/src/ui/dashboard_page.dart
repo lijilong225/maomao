@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../core/core_models.dart';
 import '../core/core_providers.dart';
 import '../profile/profile_providers.dart';
@@ -12,6 +13,7 @@ class DashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final coreState =
         ref.watch(coreStateProvider).valueOrNull ?? CoreState.stopped;
     final status = ref.watch(tunnelControllerProvider);
@@ -42,7 +44,7 @@ class DashboardPage extends ConsumerWidget {
             Expanded(
               child: _MetricTile(
                 icon: Icons.upload,
-                label: 'Upload',
+                label: l10n.trafficUpload,
                 value: formatRate(traffic.up),
               ),
             ),
@@ -50,7 +52,7 @@ class DashboardPage extends ConsumerWidget {
             Expanded(
               child: _MetricTile(
                 icon: Icons.download,
-                label: 'Download',
+                label: l10n.trafficDownload,
                 value: formatRate(traffic.down),
               ),
             ),
@@ -80,6 +82,7 @@ class _ConnectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final active = state.isActive;
 
@@ -106,15 +109,15 @@ class _ConnectionCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               switch (state) {
-                CoreState.running => 'Connected',
-                CoreState.starting => 'Connecting…',
-                CoreState.stopped => 'Disconnected',
+                CoreState.running => l10n.stateConnected,
+                CoreState.starting => l10n.stateConnecting,
+                CoreState.stopped => l10n.stateDisconnected,
               },
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 4),
             Text(
-              profileName ?? 'No profile selected',
+              profileName ?? l10n.noProfileSelected,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
@@ -157,13 +160,14 @@ class _TotalsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final snapshot = ref.watch(connectionsProvider).valueOrNull;
     return Card(
       child: Column(
         children: [
           ListTile(
             leading: const Icon(Icons.swap_vert),
-            title: const Text('Session total'),
+            title: Text(l10n.sessionTotal),
             subtitle: Text(
               snapshot == null
                   ? '—'
@@ -173,7 +177,7 @@ class _TotalsCard extends ConsumerWidget {
           ),
           ListTile(
             leading: const Icon(Icons.lan_outlined),
-            title: const Text('Active connections'),
+            title: Text(l10n.activeConnections),
             subtitle: Text('${snapshot?.connections.length ?? 0}'),
           ),
         ],
@@ -187,16 +191,17 @@ class _CoreInfoCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final version = ref.watch(coreVersionProvider);
     return Card(
       child: ListTile(
         leading: const Icon(Icons.memory),
-        title: const Text('Core'),
+        title: Text(l10n.coreLabel),
         subtitle: Text(
           version.when(
-            data: (value) => 'mihomo $value',
-            loading: () => 'loading…',
-            error: (error, _) => 'unavailable',
+            data: (value) => l10n.coreVersion(value),
+            loading: () => l10n.loading,
+            error: (error, _) => l10n.unavailable,
           ),
         ),
       ),

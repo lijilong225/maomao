@@ -1,6 +1,8 @@
 /// Formatting helpers shared by the UI.
 library;
 
+import '../../l10n/app_localizations.dart';
+
 const _byteUnits = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
 
 String formatBytes(int bytes) {
@@ -36,13 +38,13 @@ String formatTimestamp(DateTime time) {
   return '$h:$m:$s';
 }
 
-String formatRelative(DateTime? time) {
-  if (time == null) return 'never';
+String formatRelative(AppLocalizations l10n, DateTime? time) {
+  if (time == null) return l10n.relativeNever;
   final delta = DateTime.now().difference(time);
-  if (delta.inSeconds < 60) return 'just now';
-  if (delta.inMinutes < 60) return '${delta.inMinutes}m ago';
-  if (delta.inHours < 24) return '${delta.inHours}h ago';
-  return '${delta.inDays}d ago';
+  if (delta.inSeconds < 60) return l10n.relativeJustNow;
+  if (delta.inMinutes < 60) return l10n.relativeMinutesAgo(delta.inMinutes);
+  if (delta.inHours < 24) return l10n.relativeHoursAgo(delta.inHours);
+  return l10n.relativeDaysAgo(delta.inDays);
 }
 
 String formatDate(DateTime time) {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -52,6 +53,11 @@ class SettingsController extends StateNotifier<AppSettings> {
 
   Future<void> setLogLevel(LogLevel level) =>
       _persist(state.copyWith(logLevel: level));
+
+  /// Null follows the system locale.
+  Future<void> setLocale(Locale? locale) => _persist(
+    state.copyWith(locale: locale, clearLocale: locale == null),
+  );
 }
 
 final settingsControllerProvider =

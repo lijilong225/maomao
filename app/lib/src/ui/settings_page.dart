@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../core/core_models.dart';
 import '../core/core_providers.dart';
+import '../settings/app_settings.dart';
 import '../settings/settings_providers.dart';
 import '../tunnel/tunnel_controller.dart';
+
+/// Display name for each supported locale, shown in its own language.
+const _localeNames = {'en': 'English', 'zh': '简体中文'};
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsControllerProvider);
     final controller = ref.read(settingsControllerProvider.notifier);
     final running =
@@ -19,9 +25,36 @@ class SettingsPage extends ConsumerWidget {
 
     return ListView(
       children: [
-        const _SectionHeader('Tunnel'),
+        _SectionHeader(l10n.sectionAppearance),
         ListTile(
-          title: const Text('TUN stack'),
+          title: Text(l10n.language),
+          subtitle: Text(
+            settings.locale == null
+                ? l10n.languageSystem
+                : _localeNames[settings.locale!.languageCode] ??
+                      settings.locale!.languageCode,
+          ),
+          trailing: DropdownButton<String>(
+            value: settings.locale?.languageCode ?? '',
+            onChanged: (tag) => controller.setLocale(
+              tag == null || tag.isEmpty ? null : Locale(tag),
+            ),
+            items: [
+              DropdownMenuItem(value: '', child: Text(l10n.languageSystem)),
+              for (final locale in supportedLocales)
+                DropdownMenuItem(
+                  value: locale.languageCode,
+                  child: Text(
+                    _localeNames[locale.languageCode] ?? locale.languageCode,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const Divider(),
+        _SectionHeader(l10n.sectionTunnel),
+        ListTile(
+          title: Text(l10n.tunStack),
           subtitle: Text(settings.tunStack.wireName),
           trailing: DropdownButton<TunStack>(
             value: settings.tunStack,
@@ -34,25 +67,25 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         SwitchListTile(
-          title: const Text('IPv6'),
-          subtitle: const Text('Route IPv6 traffic through the tunnel'),
+          title: Text(l10n.ipv6),
+          subtitle: Text(l10n.ipv6Subtitle),
           value: settings.ipv6,
           onChanged: controller.setIpv6,
         ),
         SwitchListTile(
-          title: const Text('Bypass private routes'),
-          subtitle: const Text('Keep LAN traffic outside the tunnel'),
+          title: Text(l10n.bypassPrivateRoutes),
+          subtitle: Text(l10n.bypassPrivateRoutesSubtitle),
           value: settings.bypassPrivateRoutes,
           onChanged: controller.setBypassPrivateRoutes,
         ),
         const Divider(),
-        const _SectionHeader('Per-app proxy'),
+        _SectionHeader(l10n.sectionPerAppProxy),
         ListTile(
-          title: const Text('Tunnelled apps'),
+          title: Text(l10n.tunnelledApps),
           subtitle: Text(
             settings.allowedApps.isEmpty
-                ? 'All apps'
-                : '${settings.allowedApps.length} selected',
+                ? l10n.allApps
+                : l10n.appsSelected(settings.allowedApps.length),
           ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).push(
@@ -60,19 +93,19 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         const Divider(),
-        const _SectionHeader('Profiles'),
+        _SectionHeader(l10n.sectionProfiles),
         SwitchListTile(
-          title: const Text('Update on launch'),
-          subtitle: const Text('Refresh subscriptions whose interval elapsed'),
+          title: Text(l10n.updateOnLaunch),
+          subtitle: Text(l10n.updateOnLaunchSubtitle),
           value: settings.autoUpdateOnLaunch,
           onChanged: controller.setAutoUpdateOnLaunch,
         ),
         ListTile(
-          title: const Text('Global override'),
+          title: Text(l10n.globalOverride),
           subtitle: Text(
             settings.overrideYaml.isEmpty
-                ? 'None'
-                : '${settings.overrideYaml.split('\n').length} lines',
+                ? l10n.overrideNone
+                : l10n.overrideLines(settings.overrideYaml.split('\n').length),
           ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).push(
@@ -80,9 +113,9 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         const Divider(),
-        const _SectionHeader('Diagnostics'),
+        _SectionHeader(l10n.sectionDiagnostics),
         ListTile(
-          title: const Text('Log level'),
+          title: Text(l10n.logLevel),
           trailing: DropdownButton<LogLevel>(
             value: settings.logLevel,
             onChanged: (level) =>
@@ -98,7 +131,7 @@ class SettingsPage extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             child: FilledButton.tonalIcon(
               icon: const Icon(Icons.refresh),
-              label: const Text('Apply to running tunnel'),
+              label: Text(l10n.applyToRunningTunnel),
               onPressed: () => ref
                   .read(tunnelControllerProvider.notifier)
                   .applyConfigChanges(),
@@ -131,17 +164,18 @@ class _AppPickerPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final apps = ref.watch(installedAppsProvider);
     final selected = ref.watch(settingsControllerProvider).allowedApps.toSet();
     final controller = ref.read(settingsControllerProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tunnelled apps'),
+        title: Text(l10n.tunnelledApps),
         actions: [
           IconButton(
             icon: const Icon(Icons.clear_all),
-            tooltip: 'Tunnel all apps',
+            tooltip: l10n.tunnelAllApps,
             onPressed: () => controller.setAllowedApps(const []),
           ),
         ],
@@ -197,37 +231,40 @@ class _OverrideEditorPageState extends ConsumerState<_OverrideEditorPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Global override'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.check),
-          tooltip: 'Save',
-          onPressed: () {
-            ref
-                .read(settingsControllerProvider.notifier)
-                .setOverrideYaml(_controller.text);
-            Navigator.of(context).pop();
-          },
-        ),
-      ],
-    ),
-    body: Padding(
-      padding: const EdgeInsets.all(16),
-      child: TextField(
-        controller: _controller,
-        maxLines: null,
-        expands: true,
-        textAlignVertical: TextAlignVertical.top,
-        style: const TextStyle(fontFamily: 'monospace'),
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          alignLabelWithHint: true,
-          hintText: 'mode: rule\nlog-level: info',
-          helperText: 'YAML patch merged onto every profile',
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.globalOverride),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            tooltip: l10n.actionSave,
+            onPressed: () {
+              ref
+                  .read(settingsControllerProvider.notifier)
+                  .setOverrideYaml(_controller.text);
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: TextField(
+          controller: _controller,
+          maxLines: null,
+          expands: true,
+          textAlignVertical: TextAlignVertical.top,
+          style: const TextStyle(fontFamily: 'monospace'),
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            alignLabelWithHint: true,
+            hintText: 'mode: rule\nlog-level: info',
+            helperText: l10n.overrideHelper,
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

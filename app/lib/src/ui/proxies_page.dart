@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../api/controller_models.dart';
 import '../core/core_providers.dart';
 import 'format.dart';
@@ -10,15 +11,16 @@ class ProxiesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final proxies = ref.watch(proxiesProvider);
 
     return proxies.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _Message(text: 'Unavailable: $error'),
+      error: (error, _) => _Message(text: l10n.proxiesUnavailable('$error')),
       data: (nodes) {
         final groups = nodes.values.where((node) => node.isGroup).toList();
         if (groups.isEmpty) {
-          return const _Message(text: 'Connect to load policy groups.');
+          return _Message(text: l10n.proxiesEmpty);
         }
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(proxiesProvider),
@@ -48,7 +50,7 @@ class _GroupTile extends ConsumerWidget {
       subtitle: Text('${group.type} · ${group.now ?? '—'}'),
       trailing: IconButton(
         icon: const Icon(Icons.speed),
-        tooltip: 'Test latency',
+        tooltip: AppLocalizations.of(context).testLatency,
         onPressed: () => _testGroup(context, ref),
       ),
       children: [

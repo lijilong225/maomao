@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../profile/profile_models.dart';
 import '../profile/profile_providers.dart';
 import 'format.dart';
@@ -14,10 +15,10 @@ class ProfilesPage extends ConsumerWidget {
 
     return Scaffold(
       body: state.profiles.isEmpty
-          ? const Center(
+          ? Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Text('Add a subscription to get started.'),
+                padding: const EdgeInsets.all(32),
+                child: Text(AppLocalizations.of(context).profilesEmpty),
               ),
             )
           : ListView.builder(
@@ -70,6 +71,7 @@ class _ProfileTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final controller = ref.read(profileControllerProvider.notifier);
     final info = profile.userInfo;
 
@@ -83,7 +85,7 @@ class _ProfileTile extends ConsumerWidget {
               color: selected ? Theme.of(context).colorScheme.primary : null,
             ),
             title: Text(profile.name),
-            subtitle: Text('Updated ${formatRelative(profile.updatedAt)}'),
+            subtitle: Text(l10n.profileUpdated(formatRelative(l10n, profile.updatedAt))),
             onTap: () => controller.setActive(profile.id),
             trailing: busy
                 ? const SizedBox.square(
@@ -94,13 +96,13 @@ class _ProfileTile extends ConsumerWidget {
                     onSelected: (action) => _onAction(context, ref, action),
                     itemBuilder: (context) => [
                       if (profile.isRemote)
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'update',
-                          child: Text('Update'),
+                          child: Text(l10n.actionUpdate),
                         ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
-                        child: Text('Delete'),
+                        child: Text(l10n.actionDelete),
                       ),
                     ],
                   ),
@@ -115,7 +117,7 @@ class _ProfileTile extends ConsumerWidget {
                   const SizedBox(height: 6),
                   Text(
                     '${formatBytes(info.used)} / ${formatBytes(info.total)}'
-                    '${info.expire != null ? '  ·  expires ${formatDate(info.expire!)}' : ''}',
+                    '${info.expire != null ? '  ·  ${l10n.profileExpires(formatDate(info.expire!))}' : ''}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -166,26 +168,29 @@ class _UrlDialogState extends State<_UrlDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Add subscription'),
-    content: TextField(
-      controller: _controller,
-      autofocus: true,
-      keyboardType: TextInputType.url,
-      decoration: const InputDecoration(
-        labelText: 'URL',
-        hintText: 'https://…',
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.addSubscription),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        keyboardType: TextInputType.url,
+        decoration: InputDecoration(
+          labelText: l10n.subscriptionUrl,
+          hintText: 'https://…',
+        ),
       ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(
-        onPressed: () => Navigator.pop(context, _controller.text.trim()),
-        child: const Text('Add'),
-      ),
-    ],
-  );
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.actionCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          child: Text(l10n.actionAdd),
+        ),
+      ],
+    );
+  }
 }
