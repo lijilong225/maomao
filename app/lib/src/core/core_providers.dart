@@ -1,15 +1,24 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/controller_client.dart';
 import '../api/controller_models.dart';
+import 'core_backend.dart';
+import 'core_channel.dart';
 import 'core_models.dart';
+import 'core_process_backend.dart';
 import 'core_service.dart';
 import 'geo_assets.dart';
 
+/// Android links the core into the app process and reaches it over platform
+/// channels; Windows drives it as a sidecar process instead.
+CoreBackend createCoreBackend() =>
+    Platform.isWindows ? CoreProcessBackend() : CoreChannel();
+
 final coreServiceProvider = Provider<CoreService>((ref) {
-  final service = CoreService();
+  final service = CoreService(channel: createCoreBackend());
   ref.onDispose(service.dispose);
   return service;
 });

@@ -2,7 +2,10 @@ module github.com/longfen/maomao/core
 
 go 1.26.0
 
-require github.com/metacubex/mihomo v1.19.30
+require (
+	github.com/metacubex/mihomo v1.19.30
+	github.com/sirupsen/logrus v1.9.4
+)
 
 require (
 	github.com/RyuaNerin/go-krypto v1.3.0 // indirect
@@ -107,7 +110,6 @@ require (
 	github.com/sina-ghaderi/poly1305 v0.0.0-20220724002748-c5926b03988b // indirect
 	github.com/sina-ghaderi/rabaead v0.0.0-20220730151906-ab6e06b96e8c // indirect
 	github.com/sina-ghaderi/rabbitio v0.0.0-20220730151941-9ce26f4f872e // indirect
-	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/stangelandcl/ppmd v0.1.1 // indirect
 	github.com/tailscale/certstore v0.1.1-0.20260409135935-3638fb84b77d // indirect
 	github.com/tailscale/go-winio v0.0.0-20231025203758-c4f33415bf55 // indirect

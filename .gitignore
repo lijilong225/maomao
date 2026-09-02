@@ -18,9 +18,10 @@ app/android/key.properties
 *.jks
 *.keystore
 
-# Native build artifacts (regenerate with `make -C core android`)
+# Native build artifacts (regenerate with `make -C core android` / `windows`)
 app/android/app/libs/*.aar
 app/android/app/libs/*.jar
+app/windows/libs/*.exe
 *.so
 
 # Go

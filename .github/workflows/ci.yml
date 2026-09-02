@@ -107,3 +107,42 @@ jobs:
           name: maomao-debug-apk
           path: app/build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
+
+  windows:
+    name: debug windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: core/go.sum
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Build core sidecar
+        working-directory: core
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ../app/windows/libs | Out-Null
+          $version = go list -m -f '{{.Version}}' github.com/metacubex/mihomo
+          go build -tags "with_gvisor" -trimpath `
+            -ldflags "-s -w -X github.com/metacubex/mihomo/constant.Version=$version" `
+            -o ../app/windows/libs/maomao-core.exe ./cmd/maomao-core
+
+      - name: Build Windows app
+        working-directory: app
+        run: |
+          flutter pub get
+          flutter build windows --debug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maomao-debug-windows
+          path: app/build/windows/x64/runner/Debug
+          if-no-files-found: error

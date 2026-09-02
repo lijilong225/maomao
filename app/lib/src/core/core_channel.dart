@@ -2,41 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
+import 'core_backend.dart';
 import 'core_models.dart';
 
-/// Raised when the platform rejects a core operation.
-class CoreException implements Exception {
-  CoreException(this.code, this.message);
-
-  final String code;
-  final String? message;
-
-  @override
-  String toString() => message?.isNotEmpty == true ? message! : code;
-}
-
-sealed class CoreEvent {
-  const CoreEvent();
-}
-
-class CoreStateEvent extends CoreEvent {
-  const CoreStateEvent(this.state);
-
-  final CoreState state;
-}
-
-class CoreLogEvent extends CoreEvent {
-  const CoreLogEvent(this.entry);
-
-  final LogEntry entry;
-}
-
-/// Talks to the embedded core through the platform channels registered by
+/// Talks to the in-process core through the platform channels registered by
 /// `MaomaoPlugin`.
-///
-/// Only lifecycle and platform-only capabilities go through here. High-frequency
-/// read-only data is served by the core's loopback RESTful controller.
-class CoreChannel {
+class CoreChannel extends CoreBackend {
   CoreChannel({MethodChannel? methodChannel, EventChannel? eventChannel})
     : _methods = methodChannel ?? const MethodChannel(_methodChannelName),
       _events = eventChannel ?? const EventChannel(_eventChannelName);
@@ -50,6 +21,7 @@ class CoreChannel {
   Stream<CoreEvent>? _eventStream;
 
   /// Broadcast so state and log consumers can subscribe independently.
+  @override
   Stream<CoreEvent> get events {
     return _eventStream ??= _events
         .receiveBroadcastStream()
@@ -59,53 +31,51 @@ class CoreChannel {
         .asBroadcastStream();
   }
 
-  Stream<CoreState> get states => events
-      .where((event) => event is CoreStateEvent)
-      .cast<CoreStateEvent>()
-      .map((event) => event.state);
-
-  Stream<LogEntry> get logs => events
-      .where((event) => event is CoreLogEvent)
-      .cast<CoreLogEvent>()
-      .map((event) => event.entry);
-
+  @override
   Future<String> version() async => await _invoke<String>('version') ?? '';
 
+  @override
   Future<CoreState> state() async =>
       CoreState.parse(await _invoke<String>('state') ?? '');
 
+  @override
   Future<ControllerInfo> controllerInfo() async => ControllerInfo.fromMap(
     await _invoke<Map<dynamic, dynamic>>('controllerInfo'),
   );
 
   /// Shows the system VPN consent dialog when needed. Returns false if declined.
+  @override
   Future<bool> prepareVpn() async => await _invoke<bool>('prepareVpn') ?? false;
 
-  /// Throws [CoreException] carrying the core's own parse error message.
+  @override
   Future<void> validateConfig(String configPath) =>
       _invoke<void>('validateConfig', {'configPath': configPath});
 
-  /// Normalizes a raw subscription body (mihomo YAML or share links, optionally
-  /// base64 encoded) into mihomo YAML using the core's own parsers.
+  @override
   Future<String> convertSubscription(String raw) async =>
       await _invoke<String>('convertSubscription', {'raw': raw}) ?? '';
 
-  /// Deep-merges a declarative YAML patch onto a base config.
+  @override
   Future<String> mergeConfig(String base, String patch) async =>
       await _invoke<String>('mergeConfig', {'base': base, 'patch': patch}) ??
       '';
 
+  @override
   Future<void> start(StartRequest request) =>
       _invoke<void>('start', request.toArguments());
 
+  @override
   Future<void> stop() => _invoke<void>('stop');
 
+  @override
   Future<Traffic> traffic() async =>
       Traffic.fromMap(await _invoke<Map<dynamic, dynamic>>('traffic'));
 
+  @override
   Future<Traffic> trafficTotal() async =>
       Traffic.fromMap(await _invoke<Map<dynamic, dynamic>>('trafficTotal'));
 
+  @override
   Future<List<InstalledApp>> installedApps() async {
     final raw = await _invoke<List<dynamic>>('installedApps') ?? const [];
     final apps = raw
@@ -116,6 +86,10 @@ class CoreChannel {
     apps.sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
     return apps;
   }
+
+  /// The core lives in the app process here, so there is nothing to tear down.
+  @override
+  Future<void> dispose() async {}
 
   Future<T?> _invoke<T>(
     String method, [
@@ -130,17 +104,6 @@ class CoreChannel {
     }
   }
 
-  CoreEvent? _decodeEvent(dynamic raw) {
-    if (raw is! Map) return null;
-    return switch (raw['type']) {
-      'state' => CoreStateEvent(CoreState.parse(raw['state'] as String? ?? '')),
-      'log' => CoreLogEvent(
-        LogEntry(
-          level: LogLevel.parse(raw['level'] as String? ?? ''),
-          payload: raw['payload'] as String? ?? '',
-        ),
-      ),
-      _ => null,
-    };
-  }
+  CoreEvent? _decodeEvent(dynamic raw) =>
+      raw is Map ? decodeCoreEvent(raw) : null;
 }

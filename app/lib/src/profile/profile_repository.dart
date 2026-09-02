@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-import '../core/core_channel.dart';
+import '../core/core_backend.dart';
 import 'profile_models.dart';
 import 'profile_store.dart';
 import 'subscription_fetcher.dart';
@@ -22,7 +22,7 @@ class ProfileRepository {
   }) : _store = store ?? ProfileStore(),
        _fetcher = fetcher ?? SubscriptionFetcher();
 
-  final CoreChannel channel;
+  final CoreBackend channel;
   final ProfileStore _store;
   final SubscriptionFetcher _fetcher;
 

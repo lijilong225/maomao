@@ -19,7 +19,13 @@ LDFLAGS ?= -s -w -X github.com/metacubex/mihomo/constant.Version=$(MIHOMO_VERSIO
 # arm64 first: it is the only ABI required for Play Store 16KB page-size compliance.
 ANDROID_TARGETS ?= android/arm64,android/arm,android/amd64
 
-.PHONY: android android-check clean
+# Windows runs the core as a sidecar process, so the cmfa carve-outs (no
+# process-name matching, relaxed path checks) are not wanted there.
+WINDOWS_TAGS ?= with_gvisor
+WINDOWS_ARCH ?= amd64
+WINDOWS_OUT ?= ../app/windows/libs/maomao-core.exe
+
+.PHONY: android android-check windows windows-check clean
 
 android-check:
 	GOOS=android GOARCH=arm64 CGO_ENABLED=1 \
@@ -39,5 +45,19 @@ android:
 		-o $(AAR_OUT) \
 		./bridge
 
+windows-check:
+	GOOS=windows GOARCH=$(WINDOWS_ARCH) CGO_ENABLED=0 \
+	go build -tags "$(WINDOWS_TAGS)" ./...
+
+windows:
+	mkdir -p $(dir $(WINDOWS_OUT))
+	GOOS=windows GOARCH=$(WINDOWS_ARCH) CGO_ENABLED=0 \
+	go build \
+		-tags "$(WINDOWS_TAGS)" \
+		-trimpath \
+		-ldflags "$(LDFLAGS)" \
+		-o $(WINDOWS_OUT) \
+		./cmd/maomao-core
+
 clean:
-	rm -f $(AAR_OUT) $(basename $(AAR_OUT))-sources.jar
+	rm -f $(AAR_OUT) $(basename $(AAR_OUT))-sources.jar $(WINDOWS_OUT)

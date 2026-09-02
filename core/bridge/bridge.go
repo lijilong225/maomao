@@ -31,6 +31,15 @@ const (
 // defaultTunMTU mirrors the fallback used by the core's sing-tun listener.
 const defaultTunMTU = 9000
 
+// TUN modes accepted by Start.
+const (
+	// TunModeFD binds the descriptor handed over by the host, which owns routing.
+	TunModeFD = "fd"
+	// TunModeAuto lets the core create the interface and install the routes
+	// itself. Used by desktop hosts; needs administrator rights on Windows.
+	TunModeAuto = "auto"
+)
+
 // Delegate lets the host platform provide capabilities the core cannot reach on its own.
 // Method signatures must stay gomobile-compatible (basic types only).
 type Delegate interface {
@@ -51,6 +60,8 @@ type startOptions struct {
 	// TunStack is gvisor, system or mixed.
 	TunStack string `json:"tunStack"`
 	TunMTU   uint32 `json:"tunMTU"`
+	// TunMode is TunModeFD (default) or TunModeAuto.
+	TunMode string `json:"tunMode"`
 }
 
 type controllerInfo struct {
@@ -293,22 +304,32 @@ func applyOverrides(cfg *config.Config, opts startOptions, info controllerInfo) 
 	// Routing on Android is owned by VpnService.Builder, and iptables needs root.
 	cfg.IPTables.Enable = false
 
-	if opts.TunFd > 0 {
+	switch {
+	case opts.TunMode == TunModeAuto:
+		cfg.General.Tun.Enable = true
+		cfg.General.Tun.FileDescriptor = 0
+		cfg.General.Tun.AutoRoute = true
+		cfg.General.Tun.AutoDetectInterface = true
+		cfg.General.Tun.AutoRedirect = false
+	case opts.TunFd > 0:
 		cfg.General.Tun.Enable = true
 		cfg.General.Tun.FileDescriptor = opts.TunFd
 		cfg.General.Tun.AutoRoute = false
 		cfg.General.Tun.AutoRedirect = false
 		cfg.General.Tun.AutoDetectInterface = false
 		cfg.General.Tun.StrictRoute = false
-		if stack, ok := C.StackTypeMapping[opts.TunStack]; ok {
-			cfg.General.Tun.Stack = stack
-		}
-		if opts.TunMTU > 0 {
-			cfg.General.Tun.MTU = opts.TunMTU
-		}
-		if len(cfg.General.Tun.DNSHijack) == 0 {
-			cfg.General.Tun.DNSHijack = []string{"any:53"}
-		}
+	default:
+		return
+	}
+
+	if stack, ok := C.StackTypeMapping[opts.TunStack]; ok {
+		cfg.General.Tun.Stack = stack
+	}
+	if opts.TunMTU > 0 {
+		cfg.General.Tun.MTU = opts.TunMTU
+	}
+	if len(cfg.General.Tun.DNSHijack) == 0 {
+		cfg.General.Tun.DNSHijack = []string{"any:53"}
 	}
 }
 

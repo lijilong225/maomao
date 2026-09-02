@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -70,32 +72,40 @@ class SettingsPage extends ConsumerWidget {
             ],
           ),
         ),
-        SwitchListTile(
-          title: Text(l10n.ipv6),
-          subtitle: Text(l10n.ipv6Subtitle),
-          value: settings.ipv6,
-          onChanged: controller.setIpv6,
-        ),
-        SwitchListTile(
-          title: Text(l10n.bypassPrivateRoutes),
-          subtitle: Text(l10n.bypassPrivateRoutesSubtitle),
-          value: settings.bypassPrivateRoutes,
-          onChanged: controller.setBypassPrivateRoutes,
-        ),
-        const Divider(),
-        _SectionHeader(l10n.sectionPerAppProxy),
-        ListTile(
-          title: Text(l10n.tunnelledApps),
-          subtitle: Text(
-            settings.allowedApps.isEmpty
-                ? l10n.allApps
-                : l10n.appsSelected(settings.allowedApps.length),
+        // IPv6 and route exclusions are applied while building the Android
+        // VpnService tunnel; elsewhere the core owns the interface.
+        if (Platform.isAndroid) ...[
+          SwitchListTile(
+            title: Text(l10n.ipv6),
+            subtitle: Text(l10n.ipv6Subtitle),
+            value: settings.ipv6,
+            onChanged: controller.setIpv6,
           ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context)
-              .push(MaterialPageRoute(builder: (_) => const _AppPickerPage())),
-        ),
+          SwitchListTile(
+            title: Text(l10n.bypassPrivateRoutes),
+            subtitle: Text(l10n.bypassPrivateRoutesSubtitle),
+            value: settings.bypassPrivateRoutes,
+            onChanged: controller.setBypassPrivateRoutes,
+          ),
+        ],
         const Divider(),
+        // Per-app proxying is backed by VpnService, an Android capability.
+        if (Platform.isAndroid) ...[
+          _SectionHeader(l10n.sectionPerAppProxy),
+          ListTile(
+            title: Text(l10n.tunnelledApps),
+            subtitle: Text(
+              settings.allowedApps.isEmpty
+                  ? l10n.allApps
+                  : l10n.appsSelected(settings.allowedApps.length),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const _AppPickerPage())),
+          ),
+          const Divider(),
+        ],
         _SectionHeader(l10n.sectionProfiles),
         SwitchListTile(
           title: Text(l10n.updateOnLaunch),

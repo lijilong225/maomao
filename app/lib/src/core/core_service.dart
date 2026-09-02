@@ -1,20 +1,21 @@
 import 'dart:async';
 
 import '../api/controller_client.dart';
+import 'core_backend.dart';
 import 'core_channel.dart';
 import 'core_models.dart';
 
-/// Facade over [CoreChannel] and [ControllerClient].
+/// Facade over [CoreBackend] and [ControllerClient].
 ///
-/// The channel owns the lifecycle; the controller client is created lazily once
+/// The backend owns the lifecycle; the controller client is created lazily once
 /// the core reports `running` and torn down on stop, because its address and
 /// secret change on every launch.
 class CoreService {
-  CoreService({CoreChannel? channel}) : _channel = channel ?? CoreChannel() {
+  CoreService({CoreBackend? channel}) : _channel = channel ?? CoreChannel() {
     _stateSub = _channel.states.listen(_onState);
   }
 
-  final CoreChannel _channel;
+  final CoreBackend _channel;
   late final StreamSubscription<CoreState> _stateSub;
 
   final _stateController = StreamController<CoreState>.broadcast();
@@ -23,7 +24,7 @@ class CoreService {
   CoreState _state = CoreState.stopped;
   ControllerClient? _client;
 
-  CoreChannel get channel => _channel;
+  CoreBackend get channel => _channel;
 
   CoreState get state => _state;
 
@@ -99,5 +100,6 @@ class CoreService {
     _swapClient(null);
     await _stateController.close();
     await _clientController.close();
+    await _channel.dispose();
   }
 }
