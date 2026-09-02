@@ -42,13 +42,15 @@ class ProfilesPage extends ConsumerWidget {
   }
 
   Future<void> _showAddSheet(BuildContext context, WidgetRef ref) async {
-    final url = await showDialog<String>(
+    final draft = await showDialog<_SubscriptionDraft>(
       context: context,
-      builder: (context) => const _UrlDialog(),
+      builder: (context) => const _AddSubscriptionDialog(),
     );
-    if (url == null || url.isEmpty) return;
+    if (draft == null || draft.url.isEmpty) return;
     try {
-      await ref.read(profileControllerProvider.notifier).addRemote(url: url);
+      await ref
+          .read(profileControllerProvider.notifier)
+          .addRemote(url: draft.url, name: draft.name);
     } catch (error) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
@@ -107,6 +109,10 @@ class _ProfileTile extends ConsumerWidget {
                         child: Text(l10n.actionEdit),
                       ),
                       PopupMenuItem(
+                        value: 'rename',
+                        child: Text(l10n.actionRename),
+                      ),
+                      PopupMenuItem(
                         value: 'delete',
                         child: Text(l10n.actionDelete),
                       ),
@@ -146,6 +152,8 @@ class _ProfileTile extends ConsumerWidget {
           await controller.update(profile.id);
         case 'edit':
           await _openEditor(context, ref);
+        case 'rename':
+          await _rename(context, controller);
         case 'delete':
           await controller.remove(profile.id);
       }
@@ -155,6 +163,18 @@ class _ProfileTile extends ConsumerWidget {
             .showSnackBar(SnackBar(content: Text('$error')));
       }
     }
+  }
+
+  Future<void> _rename(
+    BuildContext context,
+    ProfileController controller,
+  ) async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => _RenameDialog(initialName: profile.name),
+    );
+    if (name == null || name.isEmpty) return;
+    await controller.rename(profile.id, name);
   }
 
   Future<void> _openEditor(BuildContext context, WidgetRef ref) async {
@@ -178,15 +198,96 @@ class _ProfileTile extends ConsumerWidget {
   }
 }
 
-class _UrlDialog extends StatefulWidget {
-  const _UrlDialog();
+/// What the add dialog collects; an empty name falls back to the subscription
+/// host.
+class _SubscriptionDraft {
+  const _SubscriptionDraft({required this.url, required this.name});
 
-  @override
-  State<_UrlDialog> createState() => _UrlDialogState();
+  final String url;
+  final String name;
 }
 
-class _UrlDialogState extends State<_UrlDialog> {
-  final _controller = TextEditingController();
+class _AddSubscriptionDialog extends StatefulWidget {
+  const _AddSubscriptionDialog();
+
+  @override
+  State<_AddSubscriptionDialog> createState() => _AddSubscriptionDialogState();
+}
+
+class _AddSubscriptionDialogState extends State<_AddSubscriptionDialog> {
+  final _url = TextEditingController();
+  final _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _url.dispose();
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.pop(
+    context,
+    _SubscriptionDraft(url: _url.text.trim(), name: _name.text.trim()),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.addSubscription),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _url,
+            autofocus: true,
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              labelText: l10n.subscriptionUrl,
+              hintText: 'https://…',
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _name,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              labelText: l10n.profileName,
+              helperText: l10n.profileNameOptional,
+              helperMaxLines: 2,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.actionCancel),
+        ),
+        FilledButton(onPressed: _submit, child: Text(l10n.actionAdd)),
+      ],
+    );
+  }
+}
+
+class _RenameDialog extends StatefulWidget {
+  const _RenameDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialName)
+        ..selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: widget.initialName.length,
+        );
 
   @override
   void dispose() {
@@ -194,29 +295,26 @@ class _UrlDialogState extends State<_UrlDialog> {
     super.dispose();
   }
 
+  void _submit() => Navigator.pop(context, _controller.text.trim());
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(l10n.addSubscription),
+      title: Text(l10n.actionRename),
       content: TextField(
         controller: _controller,
         autofocus: true,
-        keyboardType: TextInputType.url,
-        decoration: InputDecoration(
-          labelText: l10n.subscriptionUrl,
-          hintText: 'https://…',
-        ),
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _submit(),
+        decoration: InputDecoration(labelText: l10n.profileName),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(l10n.actionCancel),
         ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, _controller.text.trim()),
-          child: Text(l10n.actionAdd),
-        ),
+        FilledButton(onPressed: _submit, child: Text(l10n.actionSave)),
       ],
     );
   }

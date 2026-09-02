@@ -166,6 +166,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get actionEdit => '编辑';
 
   @override
+  String get actionRename => '重命名';
+
+  @override
   String get actionDelete => '删除';
 
   @override
@@ -185,6 +188,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get subscriptionUrl => '链接';
+
+  @override
+  String get profileName => '名称';
+
+  @override
+  String get profileNameOptional => '可留空，默认使用订阅域名';
 
   @override
   String get editProfile => '编辑配置';

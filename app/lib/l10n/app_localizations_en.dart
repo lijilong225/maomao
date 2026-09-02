@@ -169,6 +169,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionEdit => 'Edit';
 
   @override
+  String get actionRename => 'Rename';
+
+  @override
   String get actionDelete => 'Delete';
 
   @override
@@ -188,6 +191,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subscriptionUrl => 'URL';
+
+  @override
+  String get profileName => 'Name';
+
+  @override
+  String get profileNameOptional =>
+      'Optional; defaults to the subscription host';
 
   @override
   String get editProfile => 'Edit config';

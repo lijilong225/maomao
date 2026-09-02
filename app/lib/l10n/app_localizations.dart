@@ -374,6 +374,12 @@ abstract class AppLocalizations {
   /// **'Edit'**
   String get actionEdit;
 
+  /// No description provided for @actionRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get actionRename;
+
   /// No description provided for @actionDelete.
   ///
   /// In en, this message translates to:
@@ -415,6 +421,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'URL'**
   String get subscriptionUrl;
+
+  /// No description provided for @profileName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get profileName;
+
+  /// No description provided for @profileNameOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional; defaults to the subscription host'**
+  String get profileNameOptional;
 
   /// No description provided for @editProfile.
   ///
