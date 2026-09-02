@@ -150,32 +150,7 @@ class SettingsPage extends ConsumerWidget {
         const Divider(),
         _SectionHeader(l10n.sectionAbout),
         const _UpdateTile(),
-        const _VersionFooter(),
       ],
-    );
-  }
-}
-
-/// Always-visible version line at the very bottom of the page.
-class _VersionFooter extends ConsumerWidget {
-  const _VersionFooter();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // The compiled-in version stands in while the platform channel answers, so
-    // the line never collapses.
-    final version =
-        ref.watch(appVersionProvider).valueOrNull ?? fallbackAppVersion;
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-      child: Text(
-        'version:$version',
-        textAlign: TextAlign.center,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
     );
   }
 }
