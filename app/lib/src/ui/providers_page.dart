@@ -60,7 +60,9 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isProxy ? l10n.menuProxyProviders : l10n.menuRuleProviders),
+        title: Text(
+          _isProxy ? l10n.menuProxyProviders : l10n.menuRuleProviders,
+        ),
         actions: [
           if (live && entries != null && entries.isNotEmpty)
             _updatingAll
@@ -203,9 +205,9 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
     if (_isProxy) ref.invalidate(proxiesProvider);
   }
 
-  void _notify(String message) => ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(message)));
+  void _notify(String message) =>
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
 }
 
 class _Centered extends StatelessWidget {

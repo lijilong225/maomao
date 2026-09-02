@@ -296,6 +296,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get geoAssetsRequireCore => '连接后可更新数据库。';
 
   @override
+  String get sectionAbout => '关于';
+
+  @override
+  String get checkForUpdates => '检测新版';
+
+  @override
+  String currentVersion(String version) {
+    return '当前版本 $version';
+  }
+
+  @override
+  String get updateUpToDate => '已是最新版本。';
+
+  @override
+  String get updateAvailable => '发现新版本';
+
+  @override
+  String updateAvailableBody(String version) {
+    return '$version 已发布，是否打开下载页面？';
+  }
+
+  @override
+  String get updateDownload => '下载';
+
+  @override
+  String updateCheckFailed(String error) {
+    return '检测失败：$error';
+  }
+
+  @override
   String get language => '语言';
 
   @override

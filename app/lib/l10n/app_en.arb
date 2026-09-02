@@ -157,6 +157,30 @@
   "geoAssetsUpdated": "Databases updated.",
   "geoAssetsRequireCore": "Connect to update the databases.",
 
+  "sectionAbout": "About",
+  "checkForUpdates": "Check for updates",
+  "currentVersion": "Version {version}",
+  "@currentVersion": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "updateUpToDate": "You are on the latest version.",
+  "updateAvailable": "New version available",
+  "updateAvailableBody": "{version} has been released. Open the download page?",
+  "@updateAvailableBody": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "updateDownload": "Download",
+  "updateCheckFailed": "Update check failed: {error}",
+  "@updateCheckFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
   "language": "Language",
   "languageSystem": "System default",
 

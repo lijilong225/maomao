@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/core_models.dart';
 import 'app_settings.dart';
+import 'release_checker.dart';
 
 class SettingsController extends StateNotifier<AppSettings> {
   SettingsController() : super(const AppSettings()) {
@@ -33,8 +35,7 @@ class SettingsController extends StateNotifier<AppSettings> {
   Future<void> setTunStack(TunStack stack) =>
       _persist(state.copyWith(tunStack: stack));
 
-  Future<void> setIpv6(bool enabled) =>
-      _persist(state.copyWith(ipv6: enabled));
+  Future<void> setIpv6(bool enabled) => _persist(state.copyWith(ipv6: enabled));
 
   Future<void> setBypassPrivateRoutes(bool enabled) =>
       _persist(state.copyWith(bypassPrivateRoutes: enabled));
@@ -55,12 +56,21 @@ class SettingsController extends StateNotifier<AppSettings> {
       _persist(state.copyWith(logLevel: level));
 
   /// Null follows the system locale.
-  Future<void> setLocale(Locale? locale) => _persist(
-    state.copyWith(locale: locale, clearLocale: locale == null),
-  );
+  Future<void> setLocale(Locale? locale) =>
+      _persist(state.copyWith(locale: locale, clearLocale: locale == null));
 }
 
 final settingsControllerProvider =
     StateNotifierProvider<SettingsController, AppSettings>(
       (ref) => SettingsController(),
     );
+
+final releaseCheckerProvider = Provider<ReleaseChecker>((ref) {
+  final checker = ReleaseChecker();
+  ref.onDispose(checker.close);
+  return checker;
+});
+
+final appVersionProvider = FutureProvider<String>(
+  (ref) async => (await PackageInfo.fromPlatform()).version,
+);

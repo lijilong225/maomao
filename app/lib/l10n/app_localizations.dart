@@ -626,6 +626,54 @@ abstract class AppLocalizations {
   /// **'Connect to update the databases.'**
   String get geoAssetsRequireCore;
 
+  /// No description provided for @sectionAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get sectionAbout;
+
+  /// No description provided for @checkForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get checkForUpdates;
+
+  /// No description provided for @currentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String currentVersion(String version);
+
+  /// No description provided for @updateUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'You are on the latest version.'**
+  String get updateUpToDate;
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'New version available'**
+  String get updateAvailable;
+
+  /// No description provided for @updateAvailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{version} has been released. Open the download page?'**
+  String updateAvailableBody(String version);
+
+  /// No description provided for @updateDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get updateDownload;
+
+  /// No description provided for @updateCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Update check failed: {error}'**
+  String updateCheckFailed(String error);
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../core/core_models.dart';
 import '../core/core_providers.dart';
 import '../core/geo_assets.dart';
 import '../settings/app_settings.dart';
+import '../settings/release_checker.dart';
 import '../settings/settings_providers.dart';
 import '../tunnel/tunnel_controller.dart';
 import 'format.dart';
@@ -90,9 +92,8 @@ class SettingsPage extends ConsumerWidget {
                 : l10n.appsSelected(settings.allowedApps.length),
           ),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const _AppPickerPage()),
-          ),
+          onTap: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const _AppPickerPage())),
         ),
         const Divider(),
         _SectionHeader(l10n.sectionProfiles),
@@ -120,9 +121,8 @@ class SettingsPage extends ConsumerWidget {
           title: Text(l10n.geoAssets),
           subtitle: Text(l10n.geoAssetsSubtitle),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const _GeoAssetsPage()),
-          ),
+          onTap: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const _GeoAssetsPage())),
         ),
         ListTile(
           title: Text(l10n.logLevel),
@@ -147,6 +147,9 @@ class SettingsPage extends ConsumerWidget {
                   .applyConfigChanges(),
             ),
           ),
+        const Divider(),
+        _SectionHeader(l10n.sectionAbout),
+        const _UpdateTile(),
       ],
     );
   }
@@ -162,9 +165,8 @@ class _SectionHeader extends StatelessWidget {
     padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
     child: Text(
       title.toUpperCase(),
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: Theme.of(context).colorScheme.primary,
-      ),
+      style: Theme.of(context).textTheme.labelMedium
+          ?.copyWith(color: Theme.of(context).colorScheme.primary),
     ),
   );
 }
@@ -358,7 +360,86 @@ class _GeoAssetsPageState extends ConsumerState<_GeoAssetsPage> {
     }
   }
 
-  void _notify(String message) => ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(message)));
+  void _notify(String message) =>
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+}
+
+class _UpdateTile extends ConsumerStatefulWidget {
+  const _UpdateTile();
+
+  @override
+  ConsumerState<_UpdateTile> createState() => _UpdateTileState();
+}
+
+class _UpdateTileState extends ConsumerState<_UpdateTile> {
+  bool _checking = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final version = ref.watch(appVersionProvider).valueOrNull;
+    return ListTile(
+      title: Text(l10n.checkForUpdates),
+      subtitle: version == null ? null : Text(l10n.currentVersion(version)),
+      trailing: _checking
+          ? const SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.chevron_right),
+      onTap: _checking ? null : _check,
+    );
+  }
+
+  Future<void> _check() async {
+    setState(() => _checking = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final result = await ref.read(releaseCheckerProvider).check();
+      if (!mounted) return;
+      if (!result.hasUpdate) {
+        _notify(l10n.updateUpToDate);
+        return;
+      }
+      await _promptDownload(l10n, result);
+    } catch (error) {
+      if (mounted) _notify(l10n.updateCheckFailed('$error'));
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  Future<void> _promptDownload(
+    AppLocalizations l10n,
+    UpdateCheck result,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.updateAvailable),
+        content: Text(l10n.updateAvailableBody(result.latestVersion!)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.actionCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.updateDownload),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final opened = await launchUrl(
+      Uri.parse(result.url ?? releasesPageUrl),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) _notify(releasesPageUrl);
+  }
+
+  void _notify(String message) =>
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
 }

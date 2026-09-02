@@ -46,18 +46,19 @@ class ProxyNode {
 
   int get latestDelay => history.isEmpty ? 0 : history.last.delay;
 
-  static ProxyNode fromJson(String name, Map<String, dynamic> json) => ProxyNode(
-    name: json['name'] as String? ?? name,
-    type: json['type'] as String? ?? 'Unknown',
-    udp: json['udp'] as bool? ?? false,
-    now: json['now'] as String?,
-    alive: json['alive'] as bool? ?? true,
-    all: (json['all'] as List<dynamic>? ?? const []).cast<String>(),
-    history: (json['history'] as List<dynamic>? ?? const [])
-        .whereType<Map<String, dynamic>>()
-        .map(ProxyDelayHistory.fromJson)
-        .toList(),
-  );
+  static ProxyNode fromJson(String name, Map<String, dynamic> json) =>
+      ProxyNode(
+        name: json['name'] as String? ?? name,
+        type: json['type'] as String? ?? 'Unknown',
+        udp: json['udp'] as bool? ?? false,
+        now: json['now'] as String?,
+        alive: json['alive'] as bool? ?? true,
+        all: (json['all'] as List<dynamic>? ?? const []).cast<String>(),
+        history: (json['history'] as List<dynamic>? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(ProxyDelayHistory.fromJson)
+            .toList(),
+      );
 }
 
 /// Provider name the core reserves for everything declared inline in the

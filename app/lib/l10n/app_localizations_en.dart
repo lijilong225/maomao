@@ -302,6 +302,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get geoAssetsRequireCore => 'Connect to update the databases.';
 
   @override
+  String get sectionAbout => 'About';
+
+  @override
+  String get checkForUpdates => 'Check for updates';
+
+  @override
+  String currentVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get updateUpToDate => 'You are on the latest version.';
+
+  @override
+  String get updateAvailable => 'New version available';
+
+  @override
+  String updateAvailableBody(String version) {
+    return '$version has been released. Open the download page?';
+  }
+
+  @override
+  String get updateDownload => 'Download';
+
+  @override
+  String updateCheckFailed(String error) {
+    return 'Update check failed: $error';
+  }
+
+  @override
   String get language => 'Language';
 
   @override

@@ -75,7 +75,9 @@ class ControllerClient {
     return raw.map((name, value) {
       final members = ((value as Map)['proxies'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
-          .map((json) => ProxyNode.fromJson(json['name'] as String? ?? '', json))
+          .map(
+            (json) => ProxyNode.fromJson(json['name'] as String? ?? '', json),
+          )
           .toList();
       return MapEntry(name, members);
     });
@@ -121,7 +123,9 @@ class ControllerClient {
       '/group/${_seg(groupName)}/delay',
       query: {'url': url, 'timeout': timeout.inMilliseconds},
     );
-    return data.map((key, value) => MapEntry(key, (value as num?)?.toInt() ?? 0));
+    return data.map(
+      (key, value) => MapEntry(key, (value as num?)?.toInt() ?? 0),
+    );
   }
 
   // ------------------------------------------------------------------ rules
@@ -144,13 +148,13 @@ class ControllerClient {
     final data = await _get<Map<String, dynamic>>('/providers/proxies');
     final raw = (data['providers'] as Map<String, dynamic>?) ?? const {};
     return [
-      for (final entry in raw.entries)
-        if (entry.value is Map)
-          ProxyProviderInfo.fromJson(
-            entry.key,
-            (entry.value as Map).cast<String, dynamic>(),
-          ),
-    ]
+        for (final entry in raw.entries)
+          if (entry.value is Map)
+            ProxyProviderInfo.fromJson(
+              entry.key,
+              (entry.value as Map).cast<String, dynamic>(),
+            ),
+      ]
       ..removeWhere((provider) => provider.vehicleType == 'Compatible')
       ..sort((a, b) => a.name.compareTo(b.name));
   }
@@ -186,7 +190,8 @@ class ControllerClient {
   Future<void> closeConnection(String id) =>
       _request<void>('DELETE', '/connections/${_seg(id)}');
 
-  Future<void> closeAllConnections() => _request<void>('DELETE', '/connections');
+  Future<void> closeAllConnections() =>
+      _request<void>('DELETE', '/connections');
 
   // ---------------------------------------------------------------- configs
 
@@ -210,15 +215,13 @@ class ControllerClient {
   Stream<MemoryUsage> memoryStream() =>
       _wsStream('/memory').map(MemoryUsage.fromJson);
 
-  Stream<LogEntry> logStream({LogLevel level = LogLevel.info}) => _wsStream(
-    '/logs',
-    query: {'level': level.name},
-  ).map(
-    (json) => LogEntry(
-      level: LogLevel.parse(json['type'] as String? ?? ''),
-      payload: json['payload'] as String? ?? '',
-    ),
-  );
+  Stream<LogEntry> logStream({LogLevel level = LogLevel.info}) =>
+      _wsStream('/logs', query: {'level': level.name}).map(
+        (json) => LogEntry(
+          level: LogLevel.parse(json['type'] as String? ?? ''),
+          payload: json['payload'] as String? ?? '',
+        ),
+      );
 
   Stream<ConnectionSnapshot> connectionStream() =>
       _wsStream('/connections').map(ConnectionSnapshot.fromJson);
@@ -292,16 +295,14 @@ class ControllerClient {
       );
       return response.data;
     } on DioException catch (e) {
-      throw ControllerException(
-        e.response?.statusCode,
-        _describe(e),
-      );
+      throw ControllerException(e.response?.statusCode, _describe(e));
     }
   }
 
   static String _describe(DioException e) {
     final body = e.response?.data;
-    if (body is Map && body['message'] is String) return body['message'] as String;
+    if (body is Map && body['message'] is String)
+      return body['message'] as String;
     return e.message ?? e.type.name;
   }
 }

@@ -98,6 +98,15 @@
   "geoAssetsUpdate": "更新数据库",
   "geoAssetsUpdated": "数据库已更新。",
   "geoAssetsRequireCore": "连接后可更新数据库。",
+
+  "sectionAbout": "关于",
+  "checkForUpdates": "检测新版",
+  "currentVersion": "当前版本 {version}",
+  "updateUpToDate": "已是最新版本。",
+  "updateAvailable": "发现新版本",
+  "updateAvailableBody": "{version} 已发布，是否打开下载页面？",
+  "updateDownload": "下载",
+  "updateCheckFailed": "检测失败：{error}",
   "language": "语言",
   "languageSystem": "跟随系统",
 
