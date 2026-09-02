@@ -150,7 +150,29 @@ class SettingsPage extends ConsumerWidget {
         const Divider(),
         _SectionHeader(l10n.sectionAbout),
         const _UpdateTile(),
+        const _VersionFooter(),
       ],
+    );
+  }
+}
+
+class _VersionFooter extends ConsumerWidget {
+  const _VersionFooter();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final version = ref.watch(appVersionProvider).valueOrNull;
+    if (version == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+      child: Text(
+        'version:$version',
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }

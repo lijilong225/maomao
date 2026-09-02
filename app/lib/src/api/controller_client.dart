@@ -301,8 +301,9 @@ class ControllerClient {
 
   static String _describe(DioException e) {
     final body = e.response?.data;
-    if (body is Map && body['message'] is String)
+    if (body is Map && body['message'] is String) {
       return body['message'] as String;
+    }
     return e.message ?? e.type.name;
   }
 }
