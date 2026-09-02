@@ -109,13 +109,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuRuleProviders => 'Rule providers';
 
   @override
-  String get providersRequireCore => 'Connect to inspect providers.';
+  String get providersPreviewOnly =>
+      'Preview of the selected profile. Connect to update providers.';
 
   @override
   String get providersEmpty => 'This profile declares no providers.';
 
   @override
   String get providersUpdateAll => 'Update all';
+
+  @override
+  String get providerNotDownloaded => 'Not downloaded yet';
 
   @override
   String providerNodeCount(int count) {

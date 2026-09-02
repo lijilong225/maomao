@@ -22,7 +22,8 @@ class ProfileRepository {
   }) : _store = store ?? ProfileStore(),
        _fetcher = fetcher ?? SubscriptionFetcher();
 
-  final CoreChannel channel;  final ProfileStore _store;
+  final CoreChannel channel;
+  final ProfileStore _store;
   final SubscriptionFetcher _fetcher;
 
   Directory? _root;
@@ -121,7 +122,8 @@ class ProfileRepository {
 
   Future<File> _bodyFile(String id) async => _profileFile(id, 'source.yaml');
 
-  Future<File> _runtimeFile(String id) async => _profileFile(id, 'runtime.yaml');
+  Future<File> _runtimeFile(String id) async =>
+      _profileFile(id, 'runtime.yaml');
 
   Future<File> _profileFile(String id, String name) async {
     final dir = Directory('${(await _profilesRoot()).path}/$id');

@@ -32,9 +32,7 @@ class ControllerInfo {
   Uri wsUri(String path, [Map<String, dynamic>? query]) =>
       Uri.parse('ws://$addr$path').replace(queryParameters: query);
 
-  Map<String, String> get authHeaders => {
-    'Authorization': 'Bearer $secret',
-  };
+  Map<String, String> get authHeaders => {'Authorization': 'Bearer $secret'};
 
   static ControllerInfo fromMap(Map<dynamic, dynamic>? map) => ControllerInfo(
     addr: map?['addr'] as String? ?? '',

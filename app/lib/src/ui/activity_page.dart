@@ -25,9 +25,7 @@ class ActivityPage extends ConsumerWidget {
             ],
           ),
           const Expanded(
-            child: TabBarView(
-              children: [_ConnectionsTab(), _LogsTab()],
-            ),
+            child: TabBarView(children: [_ConnectionsTab(), _LogsTab()]),
           ),
         ],
       ),
@@ -49,9 +47,10 @@ class _ConnectionsTab extends ConsumerWidget {
       return Center(child: Text(l10n.connectionsEmpty));
     }
 
-    final items = [...snapshot.connections]..sort(
-      (a, b) => (b.start ?? DateTime(0)).compareTo(a.start ?? DateTime(0)),
-    );
+    final items = [...snapshot.connections]
+      ..sort(
+        (a, b) => (b.start ?? DateTime(0)).compareTo(a.start ?? DateTime(0)),
+      );
 
     return Column(
       children: [
@@ -62,9 +61,10 @@ class _ConnectionsTab extends ConsumerWidget {
             child: TextButton.icon(
               icon: const Icon(Icons.close),
               label: Text(l10n.closeAllConnections),
-              onPressed: () =>
-                  ref.read(controllerClientProvider).valueOrNull
-                      ?.closeAllConnections(),
+              onPressed: () => ref
+                  .read(controllerClientProvider)
+                  .valueOrNull
+                  ?.closeAllConnections(),
             ),
           ),
         ),
@@ -89,7 +89,11 @@ class _ConnectionTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => ListTile(
     dense: true,
-    title: Text(item.metadata.target, maxLines: 1, overflow: TextOverflow.ellipsis),
+    title: Text(
+      item.metadata.target,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    ),
     subtitle: Text(
       '${item.metadata.network.toUpperCase()} · ${item.chains.join(' → ')}\n'
       '↑ ${formatBytes(item.upload)}  ↓ ${formatBytes(item.download)}',

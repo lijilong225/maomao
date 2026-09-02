@@ -47,9 +47,10 @@
 
   "menuProxyProviders": "Proxy providers",
   "menuRuleProviders": "Rule providers",
-  "providersRequireCore": "Connect to inspect providers.",
+  "providersPreviewOnly": "Preview of the selected profile. Connect to update providers.",
   "providersEmpty": "This profile declares no providers.",
   "providersUpdateAll": "Update all",
+  "providerNotDownloaded": "Not downloaded yet",
   "providerNodeCount": "{count} nodes",
   "@providerNodeCount": {
     "placeholders": {

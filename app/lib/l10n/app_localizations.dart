@@ -284,11 +284,11 @@ abstract class AppLocalizations {
   /// **'Rule providers'**
   String get menuRuleProviders;
 
-  /// No description provided for @providersRequireCore.
+  /// No description provided for @providersPreviewOnly.
   ///
   /// In en, this message translates to:
-  /// **'Connect to inspect providers.'**
-  String get providersRequireCore;
+  /// **'Preview of the selected profile. Connect to update providers.'**
+  String get providersPreviewOnly;
 
   /// No description provided for @providersEmpty.
   ///
@@ -301,6 +301,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Update all'**
   String get providersUpdateAll;
+
+  /// No description provided for @providerNotDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Not downloaded yet'**
+  String get providerNotDownloaded;
 
   /// No description provided for @providerNodeCount.
   ///

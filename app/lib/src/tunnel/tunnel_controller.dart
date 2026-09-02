@@ -84,16 +84,17 @@ class TunnelController extends StateNotifier<TunnelStatus> {
     if (state.error != null) state = const TunnelStatus();
   }
 
-  StartRequest _request(String configPath, AppSettings settings) => StartRequest(
-    configPath: configPath,
-    profileName:
-        _ref.read(profileControllerProvider).active?.name ?? 'maomao',
-    tunStack: settings.tunStack,
-    allowedApps: settings.allowedApps,
-    disallowedApps: settings.disallowedApps,
-    ipv6: settings.ipv6,
-    bypassPrivateRoutes: settings.bypassPrivateRoutes,
-  );
+  StartRequest _request(String configPath, AppSettings settings) =>
+      StartRequest(
+        configPath: configPath,
+        profileName:
+            _ref.read(profileControllerProvider).active?.name ?? 'maomao',
+        tunStack: settings.tunStack,
+        allowedApps: settings.allowedApps,
+        disallowedApps: settings.disallowedApps,
+        ipv6: settings.ipv6,
+        bypassPrivateRoutes: settings.bypassPrivateRoutes,
+      );
 
   String _describe(Object error) => switch (error) {
     StateError() => error.message,
@@ -102,6 +103,4 @@ class TunnelController extends StateNotifier<TunnelStatus> {
 }
 
 final tunnelControllerProvider =
-    StateNotifierProvider<TunnelController, TunnelStatus>(
-      TunnelController.new,
-    );
+    StateNotifierProvider<TunnelController, TunnelStatus>(TunnelController.new);

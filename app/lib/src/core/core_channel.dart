@@ -37,11 +37,9 @@ class CoreLogEvent extends CoreEvent {
 /// Only lifecycle and platform-only capabilities go through here. High-frequency
 /// read-only data is served by the core's loopback RESTful controller.
 class CoreChannel {
-  CoreChannel({
-    MethodChannel? methodChannel,
-    EventChannel? eventChannel,
-  }) : _methods = methodChannel ?? const MethodChannel(_methodChannelName),
-       _events = eventChannel ?? const EventChannel(_eventChannelName);
+  CoreChannel({MethodChannel? methodChannel, EventChannel? eventChannel})
+    : _methods = methodChannel ?? const MethodChannel(_methodChannelName),
+      _events = eventChannel ?? const EventChannel(_eventChannelName);
 
   static const _methodChannelName = 'com.maomao.proxy/core';
   static const _eventChannelName = 'com.maomao.proxy/core_events';
@@ -76,8 +74,9 @@ class CoreChannel {
   Future<CoreState> state() async =>
       CoreState.parse(await _invoke<String>('state') ?? '');
 
-  Future<ControllerInfo> controllerInfo() async =>
-      ControllerInfo.fromMap(await _invoke<Map<dynamic, dynamic>>('controllerInfo'));
+  Future<ControllerInfo> controllerInfo() async => ControllerInfo.fromMap(
+    await _invoke<Map<dynamic, dynamic>>('controllerInfo'),
+  );
 
   /// Shows the system VPN consent dialog when needed. Returns false if declined.
   Future<bool> prepareVpn() async => await _invoke<bool>('prepareVpn') ?? false;
@@ -93,7 +92,8 @@ class CoreChannel {
 
   /// Deep-merges a declarative YAML patch onto a base config.
   Future<String> mergeConfig(String base, String patch) async =>
-      await _invoke<String>('mergeConfig', {'base': base, 'patch': patch}) ?? '';
+      await _invoke<String>('mergeConfig', {'base': base, 'patch': patch}) ??
+      '';
 
   Future<void> start(StartRequest request) =>
       _invoke<void>('start', request.toArguments());
@@ -117,7 +117,10 @@ class CoreChannel {
     return apps;
   }
 
-  Future<T?> _invoke<T>(String method, [Map<String, dynamic>? arguments]) async {
+  Future<T?> _invoke<T>(
+    String method, [
+    Map<String, dynamic>? arguments,
+  ]) async {
     try {
       return await _methods.invokeMethod<T>(method, arguments);
     } on PlatformException catch (e) {

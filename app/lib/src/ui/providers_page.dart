@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../api/controller_models.dart';
 import '../core/core_providers.dart';
+import '../profile/config_outline.dart';
+import '../profile/profile_providers.dart';
 import 'format.dart';
 
 enum ProviderKind { proxy, rule }
@@ -50,13 +52,14 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
 
   bool get _isProxy => widget.kind == ProviderKind.proxy;
 
+  ProviderSection get _section =>
+      _isProxy ? ProviderSection.proxies : ProviderSection.rules;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final live = ref.watch(controllerClientProvider).valueOrNull != null;
-    final entries = _isProxy
-        ? ref.watch(proxyProvidersProvider).valueOrNull
-        : ref.watch(ruleProvidersProvider).valueOrNull;
+    final rows = _rows(l10n, live);
 
     return Scaffold(
       appBar: AppBar(
@@ -64,7 +67,7 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
           _isProxy ? l10n.menuProxyProviders : l10n.menuRuleProviders,
         ),
         actions: [
-          if (live && entries != null && entries.isNotEmpty)
+          if (live && rows != null && rows.isNotEmpty)
             _updatingAll
                 ? const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
@@ -80,54 +83,109 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
                   ),
         ],
       ),
-      body: !live
-          ? _Centered(text: l10n.providersRequireCore)
-          : entries == null
+      body: rows == null
           ? const Center(child: CircularProgressIndicator())
-          : entries.isEmpty
+          : rows.isEmpty
           ? _Centered(text: l10n.providersEmpty)
           : RefreshIndicator(
               onRefresh: () async => _invalidate(),
               child: ListView.builder(
-                itemCount: entries.length,
-                itemBuilder: (context, index) => _tile(l10n, entries[index]),
+                // A leading note explains why the rows are read-only.
+                itemCount: rows.length + (live ? 0 : 1),
+                itemBuilder: (context, index) {
+                  if (!live && index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
+                      child: Text(
+                        l10n.providersPreviewOnly,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    );
+                  }
+                  return _tile(l10n, rows[live ? index : index - 1], live);
+                },
               ),
             ),
     );
   }
 
-  Widget _tile(AppLocalizations l10n, Object entry) {
-    final String name;
-    final String subtitle;
-    final bool updatable;
-    final DateTime? updatedAt;
+  /// Null while the source is still loading.
+  List<_Row>? _rows(AppLocalizations l10n, bool live) {
+    if (live) {
+      final entries = _isProxy
+          ? ref.watch(proxyProvidersProvider).valueOrNull
+          : ref.watch(ruleProvidersProvider).valueOrNull;
+      return entries == null
+          ? null
+          : [for (final entry in entries) _liveRow(l10n, entry)];
+    }
+    final entries = ref
+        .watch(activeProfileProvidersProvider(_section))
+        .valueOrNull;
+    return entries == null
+        ? null
+        : [for (final entry in entries) _offlineRow(l10n, entry)];
+  }
 
+  _Row _liveRow(AppLocalizations l10n, Object entry) {
     if (entry is ProxyProviderInfo) {
-      name = entry.name;
-      subtitle = l10n.providerNodeCount(entry.proxyCount);
-      updatable = entry.isUpdatable;
-      updatedAt = entry.updatedAt;
-    } else {
-      final rule = entry as RuleProviderInfo;
-      name = rule.name;
-      subtitle = [
+      return _Row(
+        name: entry.name,
+        detail: l10n.providerNodeCount(entry.proxyCount),
+        status: entry.isUpdatable
+            ? l10n.profileUpdated(formatRelative(l10n, entry.updatedAt))
+            : l10n.providerNotUpdatable,
+        updatable: entry.isUpdatable,
+      );
+    }
+    final rule = entry as RuleProviderInfo;
+    return _Row(
+      name: rule.name,
+      detail: _join([
         l10n.providerRuleCount(rule.ruleCount),
         rule.behavior,
-        if (rule.format.isNotEmpty) rule.format,
-      ].where((part) => part.isNotEmpty).join(' · ');
-      updatable = rule.isUpdatable;
-      updatedAt = rule.updatedAt;
-    }
+        rule.format,
+      ]),
+      status: rule.isUpdatable
+          ? l10n.profileUpdated(formatRelative(l10n, rule.updatedAt))
+          : l10n.providerNotUpdatable,
+      updatable: rule.isUpdatable,
+    );
+  }
 
+  /// Offline rows are never updatable: refreshing one is the core's job.
+  _Row _offlineRow(AppLocalizations l10n, ProfileProviderEntry entry) {
+    final count = entry.count;
+    final updatedAt = entry.updatedAt;
+    // An inline payload is always available; a fetched one only after a sync.
+    final available = !entry.ref.isFetched || updatedAt != null;
+    return _Row(
+      name: entry.ref.name,
+      detail: _isProxy
+          ? (available ? l10n.providerNodeCount(count ?? 0) : '')
+          : _join([
+              // A binary bundle has no countable entries before it is decoded.
+              if (available && count != null) l10n.providerRuleCount(count),
+              entry.ref.behaviorLabel,
+              entry.ref.formatLabel,
+            ]),
+      status: !entry.ref.isFetched
+          ? l10n.providerNotUpdatable
+          : updatedAt == null
+          ? l10n.providerNotDownloaded
+          : l10n.profileUpdated(formatRelative(l10n, updatedAt)),
+    );
+  }
+
+  Widget _tile(AppLocalizations l10n, _Row row, bool live) {
+    final lines = [row.detail, row.status].where((line) => line.isNotEmpty);
     return ListTile(
-      title: Text(name),
-      subtitle: Text(
-        '$subtitle\n${updatable ? l10n.profileUpdated(formatRelative(l10n, updatedAt)) : l10n.providerNotUpdatable}',
-      ),
-      isThreeLine: true,
-      trailing: !updatable
+      title: Text(row.name),
+      subtitle: Text(lines.join('\n')),
+      isThreeLine: lines.length > 1,
+      trailing: !(live && row.updatable)
           ? null
-          : _busy.contains(name)
+          : _busy.contains(row.name)
           ? const SizedBox.square(
               dimension: 20,
               child: CircularProgressIndicator(strokeWidth: 2),
@@ -135,7 +193,7 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
           : IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: l10n.actionUpdate,
-              onPressed: () => _updateOne(name),
+              onPressed: () => _updateOne(row.name),
             ),
     );
   }
@@ -202,6 +260,7 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
 
   void _invalidate() {
     ref.invalidate(_isProxy ? proxyProvidersProvider : ruleProvidersProvider);
+    ref.invalidate(activeProfileProvidersProvider(_section));
     if (_isProxy) ref.invalidate(proxiesProvider);
   }
 
@@ -209,6 +268,24 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
 }
+
+/// A provider row, filled either from the controller or from the config file.
+class _Row {
+  const _Row({
+    required this.name,
+    required this.detail,
+    required this.status,
+    this.updatable = false,
+  });
+
+  final String name;
+  final String detail;
+  final String status;
+  final bool updatable;
+}
+
+String _join(Iterable<String> parts) =>
+    parts.where((part) => part.isNotEmpty).join(' · ');
 
 class _Centered extends StatelessWidget {
   const _Centered({required this.text});

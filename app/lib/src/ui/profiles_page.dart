@@ -51,9 +51,8 @@ class ProfilesPage extends ConsumerWidget {
       await ref.read(profileControllerProvider.notifier).addRemote(url: url);
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$error')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$error')));
       }
     }
   }
@@ -86,7 +85,9 @@ class _ProfileTile extends ConsumerWidget {
               color: selected ? Theme.of(context).colorScheme.primary : null,
             ),
             title: Text(profile.name),
-            subtitle: Text(l10n.profileUpdated(formatRelative(l10n, profile.updatedAt))),
+            subtitle: Text(
+              l10n.profileUpdated(formatRelative(l10n, profile.updatedAt)),
+            ),
             onTap: () => controller.setActive(profile.id),
             trailing: busy
                 ? const SizedBox.square(
@@ -150,9 +151,8 @@ class _ProfileTile extends ConsumerWidget {
       }
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$error')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$error')));
       }
     }
   }
@@ -164,7 +164,9 @@ class _ProfileTile extends ConsumerWidget {
     if (!context.mounted) return;
     if (body == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).profileNotDownloaded)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).profileNotDownloaded),
+        ),
       );
       return;
     }
@@ -265,7 +267,8 @@ class _ProfileEditorPageState extends ConsumerState<_ProfileEditorPage> {
       return;
     }
     setState(() => _saving = false);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(failure)));
   }
 
   @override

@@ -107,13 +107,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get menuRuleProviders => '规则集合';
 
   @override
-  String get providersRequireCore => '连接后可查看集合。';
+  String get providersPreviewOnly => '当前配置的预览。连接后可更新集合。';
 
   @override
   String get providersEmpty => '当前配置未声明集合。';
 
   @override
   String get providersUpdateAll => '全部更新';
+
+  @override
+  String get providerNotDownloaded => '尚未下载';
 
   @override
   String providerNodeCount(int count) {

@@ -35,10 +35,9 @@ proxy-groups:
     use: [remote]
 ''';
 
-    expect(
-      parseConfigProviders(config).map((p) => p.url),
-      ['https://example.com/sub'],
-    );
+    expect(parseConfigProviders(config).map((p) => p.url), [
+      'https://example.com/sub',
+    ]);
 
     final outline = parseConfigOutline(
       config,
@@ -116,5 +115,90 @@ proxy-groups:
   test('returns nothing for configs without groups or invalid yaml', () {
     expect(parseConfigOutline('proxies: []').groups, isEmpty);
     expect(parseConfigOutline('\tnot: yaml').groups, isEmpty);
+  });
+
+  test('reads rule-providers including inline ones', () {
+    final refs = parseConfigProviderRefs('''
+rule-providers:
+  ads:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://example.com/ads.mrs
+  lan:
+    type: inline
+    behavior: classical
+    payload:
+      - IP-CIDR,192.168.0.0/16
+      - IP-CIDR,10.0.0.0/8
+''', ProviderSection.rules);
+
+    expect(refs.map((r) => r.name), ['ads', 'lan']);
+    expect(refs.first.isFetched, isTrue);
+    expect(refs.first.behaviorLabel, 'Domain');
+    expect(refs.first.formatLabel, 'MrsRule');
+    expect(refs.last.isFetched, isFalse);
+    // An omitted format means yaml, as in the core.
+    expect(refs.last.formatLabel, 'YamlRule');
+    expect(refs.last.payloadCount, 2);
+  });
+
+  test('counts entries of cached provider bodies', () {
+    expect(
+      countProviderProxies('''
+proxies:
+  - name: hk-01
+    type: ss
+  - name: jp-01
+    type: vmess
+'''),
+      2,
+    );
+
+    expect(
+      countProviderRules('''
+payload:
+  - '+.example.com'
+  - '+.example.org'
+''', 'yaml'),
+      2,
+    );
+
+    expect(
+      countProviderRules('''
+# comment
++.example.com
+
+// premium comment
++.example.org
+''', 'text'),
+      2,
+    );
+
+    // A binary bundle cannot be counted without decoding it.
+    expect(countProviderRules('\u0000MRS', 'mrs'), isNull);
+  });
+
+  test('keeps unfetched proxy providers out of the cache lookup', () {
+    const config = '''
+proxy-providers:
+  remote:
+    type: http
+    url: https://example.com/sub
+  local:
+    type: inline
+    payload:
+      - name: inline-01
+        type: ss
+''';
+
+    expect(parseConfigProviders(config).map((p) => p.name), ['remote']);
+    expect(
+      parseConfigProviderRefs(
+        config,
+        ProviderSection.proxies,
+      ).map((p) => p.name),
+      ['remote', 'local'],
+    );
   });
 }

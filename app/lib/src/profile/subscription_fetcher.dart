@@ -76,9 +76,7 @@ class SubscriptionFetcher {
         userInfo: SubscriptionUserInfo.parseHeader(
           response.headers.value('subscription-userinfo'),
         ),
-        suggestedName: _filename(
-          response.headers.value('content-disposition'),
-        ),
+        suggestedName: _filename(response.headers.value('content-disposition')),
       );
     }
 
@@ -208,13 +206,14 @@ class SubscriptionFetcher {
     if (bytes[0] == 0xfc || bytes[0] == 0xfd) return true; // fc00::/7
     if (bytes[0] == 0xfe && (bytes[1] & 0xc0) == 0x80) return true; // fe80::/10
     // IPv4-mapped ::ffff:0:0/96 must be judged by its embedded IPv4 address.
-    final mapped = bytes.sublist(0, 10).every((b) => b == 0) &&
+    final mapped =
+        bytes.sublist(0, 10).every((b) => b == 0) &&
         bytes[10] == 0xff &&
         bytes[11] == 0xff;
     if (mapped) {
-      return _isPrivate(InternetAddress.fromRawAddress(
-        Uint8List.fromList(bytes.sublist(12)),
-      ));
+      return _isPrivate(
+        InternetAddress.fromRawAddress(Uint8List.fromList(bytes.sublist(12))),
+      );
     }
     return false;
   }

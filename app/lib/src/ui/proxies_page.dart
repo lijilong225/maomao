@@ -156,7 +156,8 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
   }
 
   void _notify(String message) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
 }
 
 class _Message extends StatelessWidget {

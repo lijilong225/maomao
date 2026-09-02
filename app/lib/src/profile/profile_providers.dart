@@ -18,11 +18,7 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 });
 
 class ProfileState {
-  const ProfileState({
-    this.profiles = const [],
-    this.activeId,
-    this.busyId,
-  });
+  const ProfileState({this.profiles = const [], this.activeId, this.busyId});
 
   final List<Profile> profiles;
   final String? activeId;
@@ -225,3 +221,57 @@ final activeProfileOutlineProvider = FutureProvider<ProxySnapshot>((ref) async {
       .read(parseConfigProviders(body));
   return parseConfigOutline(body, providerBodies: bodies);
 });
+
+/// One provider collection of the active profile, read from its config file and
+/// the bodies the core cached on disk.
+class ProfileProviderEntry {
+  const ProfileProviderEntry({required this.ref, this.count, this.updatedAt});
+
+  final ConfigProviderRef ref;
+
+  /// Nodes or rules currently available offline, or null when the format is a
+  /// binary bundle that cannot be counted without decoding it.
+  final int? count;
+
+  /// Timestamp of the cached body; null when it was never downloaded.
+  final DateTime? updatedAt;
+}
+
+/// Provider collections of the active profile as declared in its config file.
+///
+/// Mirrors what `/providers/{proxies,rules}` reports so both collections stay
+/// browsable while the core is down. Counts and timestamps come from the cache
+/// files the core left behind, so a never-updated provider lists nothing.
+final activeProfileProvidersProvider =
+    FutureProvider.family<List<ProfileProviderEntry>, ProviderSection>((
+      ref,
+      section,
+    ) async {
+      final id = ref.watch(profileControllerProvider).activeId;
+      if (id == null) return const [];
+      final body = await ref.watch(profileRepositoryProvider).readBody(id);
+      if (body == null) return const [];
+
+      final refs = parseConfigProviderRefs(body, section);
+      final cached = await ref
+          .watch(providerCacheProvider)
+          .readWithStat(refs.where((entry) => entry.isFetched));
+
+      return [
+        for (final entry in refs)
+          if (!entry.isFetched)
+            // An inline payload lives in the config file itself.
+            ProfileProviderEntry(ref: entry, count: entry.payloadCount)
+          else
+            ProfileProviderEntry(
+              ref: entry,
+              count: switch (cached[entry.name]) {
+                null => 0,
+                final hit when section == ProviderSection.proxies =>
+                  countProviderProxies(hit.body),
+                final hit => countProviderRules(hit.body, entry.format),
+              },
+              updatedAt: cached[entry.name]?.updatedAt,
+            ),
+      ];
+    });

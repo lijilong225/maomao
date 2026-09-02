@@ -17,13 +17,15 @@ class DashboardPage extends ConsumerWidget {
     final coreState =
         ref.watch(coreStateProvider).valueOrNull ?? CoreState.stopped;
     final status = ref.watch(tunnelControllerProvider);
-    final traffic = ref.watch(trafficProvider).valueOrNull ?? const Traffic.zero();
+    final traffic =
+        ref.watch(trafficProvider).valueOrNull ?? const Traffic.zero();
     final profile = ref.watch(profileControllerProvider).active;
 
     ref.listen(tunnelControllerProvider, (_, next) {
       final error = next.error;
       if (error == null) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       ref.read(tunnelControllerProvider.notifier).clearError();
     });
 
@@ -96,8 +98,12 @@ class _ConnectionCard extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               onPressed: busy ? null : onToggle,
               style: IconButton.styleFrom(
-                backgroundColor: active ? scheme.primary : scheme.surfaceContainerHighest,
-                foregroundColor: active ? scheme.onPrimary : scheme.onSurfaceVariant,
+                backgroundColor: active
+                    ? scheme.primary
+                    : scheme.surfaceContainerHighest,
+                foregroundColor: active
+                    ? scheme.onPrimary
+                    : scheme.onSurfaceVariant,
               ),
               icon: busy
                   ? const SizedBox.square(
@@ -107,14 +113,11 @@ class _ConnectionCard extends StatelessWidget {
                   : Icon(active ? Icons.shield : Icons.shield_outlined),
             ),
             const SizedBox(height: 16),
-            Text(
-              switch (state) {
-                CoreState.running => l10n.stateConnected,
-                CoreState.starting => l10n.stateConnecting,
-                CoreState.stopped => l10n.stateDisconnected,
-              },
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text(switch (state) {
+              CoreState.running => l10n.stateConnected,
+              CoreState.starting => l10n.stateConnecting,
+              CoreState.stopped => l10n.stateDisconnected,
+            }, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
               profileName ?? l10n.noProfileSelected,

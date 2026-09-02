@@ -12,48 +12,143 @@ const _groupTypes = {
   'relay': 'Relay',
 };
 
-/// A `proxy-providers` entry whose node list lives outside the config file.
+/// Rule set `behavior` / `format` as spelled in a config file mapped to the
+/// name the controller reports.
+const _behaviors = {
+  'domain': 'Domain',
+  'ipcidr': 'IPCIDR',
+  'classical': 'Classical',
+};
+const _formats = {
+  '': 'YamlRule',
+  'yaml': 'YamlRule',
+  'text': 'TextRule',
+  'mrs': 'MrsRule',
+};
+
+/// Config sections that declare provider collections.
+enum ProviderSection {
+  proxies('proxy-providers', 'proxies'),
+  rules('rule-providers', 'rules');
+
+  const ProviderSection(this.key, this.cachePrefix);
+
+  /// Top level key holding the section.
+  final String key;
+
+  /// Sub-directory of the core home where a downloaded body is cached.
+  final String cachePrefix;
+}
+
+/// A `proxy-providers` or `rule-providers` entry as declared in a config file.
 class ConfigProviderRef {
   const ConfigProviderRef({
+    required this.section,
     required this.name,
     required this.type,
     this.url,
     this.path,
+    this.behavior = '',
+    this.format = '',
+    this.payloadCount = 0,
   });
 
+  final ProviderSection section;
   final String name;
 
-  /// `http` or `file`; `inline` providers never reach this class because their
-  /// payload is part of the config file.
+  /// `http`, `file` or `inline`.
   final String type;
   final String? url;
   final String? path;
+
+  /// `rule-providers` only.
+  final String behavior;
+
+  /// `rule-providers` only; an omitted format means yaml.
+  final String format;
+
+  /// Entries of an `inline` payload, which lives in the config file itself.
+  final int payloadCount;
+
+  /// Whether the core downloads the content, which is what an update refreshes
+  /// and what leaves a cache file behind.
+  bool get isFetched => type == 'http' || type == 'file';
+
+  /// Behaviour as the controller reports it, so an offline row reads like a
+  /// live one.
+  String get behaviorLabel => _behaviors[behavior] ?? behavior;
+
+  /// Format as the controller reports it.
+  String get formatLabel => _formats[format] ?? format;
 }
 
-/// Providers that must be read from disk before [parseConfigOutline] can list
-/// their members. The core caches an `http` provider under
-/// `<home>/proxies/<md5 of url>` and reads a `file` provider from [path],
-/// resolved against the core home directory when relative.
-List<ConfigProviderRef> parseConfigProviders(String yaml) {
-  final doc = _loadMap(yaml);
-  final raw = doc?['proxy-providers'];
+/// Every entry declared under [section], `inline` ones included.
+List<ConfigProviderRef> parseConfigProviderRefs(
+  String yaml,
+  ProviderSection section,
+) {
+  final raw = _loadMap(yaml)?[section.key];
   if (raw is! Map) return const [];
 
   final refs = <ConfigProviderRef>[];
   raw.forEach((key, value) {
     if (key is! String || value is! Map) return;
     final type = value['type'];
-    if (type != 'http' && type != 'file') return;
+    if (type is! String) return;
+    final payload = value['payload'];
     refs.add(
       ConfigProviderRef(
+        section: section,
         name: key,
-        type: type as String,
+        type: type,
         url: value['url'] is String ? value['url'] as String : null,
         path: value['path'] is String ? value['path'] as String : null,
+        behavior: value['behavior'] is String
+            ? value['behavior'] as String
+            : '',
+        format: value['format'] is String ? value['format'] as String : '',
+        payloadCount: payload is List ? payload.length : 0,
       ),
     );
   });
   return refs;
+}
+
+/// Providers that must be read from disk before [parseConfigOutline] can list
+/// their members. The core caches an `http` provider under
+/// `<home>/proxies/<md5 of url>` and reads a `file` provider from its `path`,
+/// resolved against the core home directory when relative.
+List<ConfigProviderRef> parseConfigProviders(String yaml) => [
+  for (final ref in parseConfigProviderRefs(yaml, ProviderSection.proxies))
+    if (ref.isFetched) ref,
+];
+
+/// Nodes in a `proxy-providers` body the core downloaded.
+int countProviderProxies(String body) =>
+    _parseNodes(_loadMap(body)?['proxies']).length;
+
+/// Rules in a `rule-providers` body the core downloaded, or null for a binary
+/// bundle whose entries cannot be counted without decoding it.
+int? countProviderRules(String body, String format) {
+  switch (format) {
+    case 'mrs':
+      return null;
+    case 'text':
+      // The core skips blank lines and `#` / `//` comments.
+      return body
+          .split('\n')
+          .map((line) => line.trim())
+          .where(
+            (line) =>
+                line.isNotEmpty &&
+                !line.startsWith('#') &&
+                !line.startsWith('//'),
+          )
+          .length;
+    default:
+      final payload = _loadMap(body)?['payload'];
+      return payload is List ? payload.length : 0;
+  }
 }
 
 /// Reads policy groups straight out of a config file so they can be browsed
