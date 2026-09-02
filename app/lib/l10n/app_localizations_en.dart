@@ -110,7 +110,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get providersPreviewOnly =>
-      'Preview of the selected profile. Connect to update providers.';
+      'Read from the selected profile and its cached files.';
 
   @override
   String get providersEmpty => 'This profile declares no providers.';

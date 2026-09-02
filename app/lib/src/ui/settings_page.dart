@@ -156,13 +156,16 @@ class SettingsPage extends ConsumerWidget {
   }
 }
 
+/// Always-visible version line at the very bottom of the page.
 class _VersionFooter extends ConsumerWidget {
   const _VersionFooter();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final version = ref.watch(appVersionProvider).valueOrNull;
-    if (version == null) return const SizedBox.shrink();
+    // The compiled-in version stands in while the platform channel answers, so
+    // the line never collapses.
+    final version =
+        ref.watch(appVersionProvider).valueOrNull ?? fallbackAppVersion;
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
@@ -400,10 +403,11 @@ class _UpdateTileState extends ConsumerState<_UpdateTile> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final version = ref.watch(appVersionProvider).valueOrNull;
+    final version =
+        ref.watch(appVersionProvider).valueOrNull ?? fallbackAppVersion;
     return ListTile(
       title: Text(l10n.checkForUpdates),
-      subtitle: version == null ? null : Text(l10n.currentVersion(version)),
+      subtitle: Text(l10n.currentVersion(version)),
       trailing: _checking
           ? const SizedBox.square(
               dimension: 20,

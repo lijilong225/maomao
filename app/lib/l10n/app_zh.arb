@@ -37,7 +37,7 @@
 
   "menuProxyProviders": "代理集合",
   "menuRuleProviders": "规则集合",
-  "providersPreviewOnly": "当前配置的预览。连接后可更新集合。",
+  "providersPreviewOnly": "读取自当前配置及其缓存文件。",
   "providersEmpty": "当前配置未声明集合。",
   "providersUpdateAll": "全部更新",
   "providerNotDownloaded": "尚未下载",

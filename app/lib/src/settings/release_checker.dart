@@ -7,6 +7,26 @@ const releasesPageUrl = 'https://github.com/lijilong225/maomao/releases';
 const _latestReleaseApi =
     'https://api.github.com/repos/lijilong225/maomao/releases/latest';
 
+/// Version compiled into the app, used when the platform side cannot answer.
+///
+/// Must stay in sync with `version:` in `pubspec.yaml`; a test enforces it.
+const fallbackAppVersion = '1.0.1';
+
+/// Installed version, falling back to [fallbackAppVersion] instead of failing.
+///
+/// `PackageInfo` crosses a platform channel, which throws when the plugin is
+/// not attached (a stale install, an engine restarted after the plugin was
+/// added). That used to make the version vanish from the UI without a trace.
+Future<String> currentAppVersion() async {
+  try {
+    final version = (await PackageInfo.fromPlatform()).version;
+    if (version.isNotEmpty) return version;
+  } catch (_) {
+    // Showing a slightly stale version beats showing none.
+  }
+  return fallbackAppVersion;
+}
+
 class UpdateCheck {
   const UpdateCheck({
     required this.currentVersion,
@@ -41,7 +61,7 @@ class ReleaseChecker {
   void close() => _dio.close(force: true);
 
   Future<UpdateCheck> check() async {
-    final current = (await PackageInfo.fromPlatform()).version;
+    final current = await currentAppVersion();
     final Response<Map<String, dynamic>> response;
     try {
       response = await _dio.get<Map<String, dynamic>>(_latestReleaseApi);

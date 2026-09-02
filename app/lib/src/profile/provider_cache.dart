@@ -69,6 +69,32 @@ class ProviderCache {
   static Future<Directory> _coreHome() async =>
       Directory('${(await getApplicationSupportDirectory()).path}/core');
 
+  /// Stores [bytes] where the core expects the body of [ref].
+  ///
+  /// Writing the very same file the core reads is what lets the app refresh a
+  /// provider while the tunnel is down; the core picks the new body up on its
+  /// next start. Only a downloadable provider has a location to write, and the
+  /// resolved path must stay inside the core home: a config file is untrusted
+  /// input and its `path` must not be able to steer a write out of the sandbox.
+  Future<void> write(ConfigProviderRef ref, List<int> bytes) async {
+    final home = homeDir ?? await _coreHome();
+    final file = ref.isDownloadable ? _fileFor(ref, home) : null;
+    if (file == null || !_isInside(home, file)) {
+      throw const FileSystemException(
+        'Provider has no writable cache location',
+      );
+    }
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(bytes, flush: true);
+  }
+
+  static bool _isInside(Directory home, File file) {
+    final root = home.absolute.uri.normalizePath().path;
+    return file.absolute.uri.normalizePath().path.startsWith(
+      root.endsWith('/') ? root : '$root/',
+    );
+  }
+
   File? _fileFor(ConfigProviderRef ref, Directory home) {
     final path = ref.path;
     if (path != null && path.isNotEmpty) {

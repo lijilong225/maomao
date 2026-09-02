@@ -287,7 +287,7 @@ abstract class AppLocalizations {
   /// No description provided for @providersPreviewOnly.
   ///
   /// In en, this message translates to:
-  /// **'Preview of the selected profile. Connect to update providers.'**
+  /// **'Read from the selected profile and its cached files.'**
   String get providersPreviewOnly;
 
   /// No description provided for @providersEmpty.

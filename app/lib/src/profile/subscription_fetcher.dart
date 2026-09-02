@@ -57,6 +57,25 @@ class SubscriptionFetcher {
   void close() => _dio.close(force: true);
 
   Future<SubscriptionPayload> fetch(String rawUrl) async {
+    final response = await _fetch(rawUrl);
+    return SubscriptionPayload(
+      body: _decode(await _readBytes(response)),
+      userInfo: SubscriptionUserInfo.parseHeader(
+        response.headers.value('subscription-userinfo'),
+      ),
+      suggestedName: _filename(response.headers.value('content-disposition')),
+    );
+  }
+
+  /// Raw body of [rawUrl], fetched under the same checks as [fetch].
+  ///
+  /// A rule set in `mrs` format is a binary bundle, so it must reach the caller
+  /// undecoded.
+  Future<Uint8List> fetchBytes(String rawUrl) async =>
+      _readBytes(await _fetch(rawUrl));
+
+  /// Final response of [rawUrl], with its body still unread.
+  Future<Response<ResponseBody>> _fetch(String rawUrl) async {
     var target = _validateUrl(rawUrl);
 
     for (var hop = 0; hop <= maxRedirects; hop++) {
@@ -71,13 +90,7 @@ class SubscriptionFetcher {
         continue;
       }
 
-      return SubscriptionPayload(
-        body: await _readBody(response),
-        userInfo: SubscriptionUserInfo.parseHeader(
-          response.headers.value('subscription-userinfo'),
-        ),
-        suggestedName: _filename(response.headers.value('content-disposition')),
-      );
+      return response;
     }
 
     throw SubscriptionException('Too many redirects (>$maxRedirects)');
@@ -103,7 +116,7 @@ class SubscriptionFetcher {
     }
   }
 
-  Future<String> _readBody(Response<ResponseBody> response) async {
+  Future<Uint8List> _readBytes(Response<ResponseBody> response) async {
     final declared = int.tryParse(
       response.headers.value(HttpHeaders.contentLengthHeader) ?? '',
     );
@@ -125,8 +138,12 @@ class SubscriptionFetcher {
       }
     }
 
+    return builder.takeBytes();
+  }
+
+  static String _decode(Uint8List bytes) {
     try {
-      return utf8.decode(builder.takeBytes());
+      return utf8.decode(bytes);
     } on FormatException {
       throw SubscriptionException('Subscription body is not valid UTF-8');
     }

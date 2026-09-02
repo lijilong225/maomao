@@ -67,7 +67,7 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
           _isProxy ? l10n.menuProxyProviders : l10n.menuRuleProviders,
         ),
         actions: [
-          if (live && rows != null && rows.isNotEmpty)
+          if (rows != null && rows.any((row) => row.updatable))
             _updatingAll
                 ? const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
@@ -79,7 +79,7 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
                 : IconButton(
                     icon: const Icon(Icons.refresh),
                     tooltip: l10n.providersUpdateAll,
-                    onPressed: _updateAll,
+                    onPressed: () => _updateAll(rows),
                   ),
         ],
       ),
@@ -90,7 +90,7 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
           : RefreshIndicator(
               onRefresh: () async => _invalidate(),
               child: ListView.builder(
-                // A leading note explains why the rows are read-only.
+                // A leading note explains where the offline numbers come from.
                 itemCount: rows.length + (live ? 0 : 1),
                 itemBuilder: (context, index) {
                   if (!live && index == 0) {
@@ -102,7 +102,7 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
                       ),
                     );
                   }
-                  return _tile(l10n, rows[live ? index : index - 1], live);
+                  return _tile(l10n, rows[live ? index : index - 1]);
                 },
               ),
             ),
@@ -153,7 +153,8 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
     );
   }
 
-  /// Offline rows are never updatable: refreshing one is the core's job.
+  /// Offline rows update through the app itself, which can only refresh what it
+  /// is able to download.
   _Row _offlineRow(AppLocalizations l10n, ProfileProviderEntry entry) {
     final count = entry.count;
     final updatedAt = entry.updatedAt;
@@ -174,16 +175,18 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
           : updatedAt == null
           ? l10n.providerNotDownloaded
           : l10n.profileUpdated(formatRelative(l10n, updatedAt)),
+      updatable: entry.ref.isDownloadable,
+      offlineRef: entry.ref,
     );
   }
 
-  Widget _tile(AppLocalizations l10n, _Row row, bool live) {
+  Widget _tile(AppLocalizations l10n, _Row row) {
     final lines = [row.detail, row.status].where((line) => line.isNotEmpty);
     return ListTile(
       title: Text(row.name),
       subtitle: Text(lines.join('\n')),
       isThreeLine: lines.length > 1,
-      trailing: !(live && row.updatable)
+      trailing: !row.updatable
           ? null
           : _busy.contains(row.name)
           ? const SizedBox.square(
@@ -193,47 +196,41 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
           : IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: l10n.actionUpdate,
-              onPressed: () => _updateOne(row.name),
+              onPressed: () => _updateOne(row),
             ),
     );
   }
 
-  Future<void> _updateOne(String name) async {
-    setState(() => _busy.add(name));
+  Future<void> _updateOne(_Row row) async {
+    setState(() => _busy.add(row.name));
     try {
-      await _update(name);
+      await _update(row);
       _invalidate();
     } catch (error) {
       if (mounted) {
         _notify(
-          AppLocalizations.of(context).providerUpdateFailed(name, '$error'),
+          AppLocalizations.of(context).providerUpdateFailed(row.name, '$error'),
         );
       }
     } finally {
-      if (mounted) setState(() => _busy.remove(name));
+      if (mounted) setState(() => _busy.remove(row.name));
     }
   }
 
-  Future<void> _updateAll() async {
-    final entries = _isProxy
-        ? ref.read(proxyProvidersProvider).valueOrNull
-        : ref.read(ruleProvidersProvider).valueOrNull;
-    final names = [
-      for (final entry in entries ?? const <Object>[])
-        if (entry is ProxyProviderInfo && entry.isUpdatable)
-          entry.name
-        else if (entry is RuleProviderInfo && entry.isUpdatable)
-          entry.name,
+  Future<void> _updateAll(List<_Row> rows) async {
+    final targets = [
+      for (final row in rows)
+        if (row.updatable) row,
     ];
-    if (names.isEmpty) return;
+    if (targets.isEmpty) return;
 
     setState(() => _updatingAll = true);
     var done = 0;
     var failed = 0;
     // Sequential on purpose: a subscription host throttles parallel fetches.
-    for (final name in names) {
+    for (final row in targets) {
       try {
-        await _update(name);
+        await _update(row);
         done++;
       } catch (_) {
         failed++;
@@ -250,12 +247,18 @@ class _ProvidersPageState extends ConsumerState<ProvidersPage> {
     );
   }
 
-  Future<void> _update(String name) async {
+  /// Refreshes one collection, through the core when it runs and by downloading
+  /// into its cache when it does not.
+  Future<void> _update(_Row row) async {
+    final offline = row.offlineRef;
+    if (offline != null) {
+      return ref.read(offlineProviderUpdaterProvider).update(offline);
+    }
     final client = ref.read(controllerClientProvider).valueOrNull;
     if (client == null) return;
     return _isProxy
-        ? client.updateProxyProvider(name)
-        : client.updateRuleProvider(name);
+        ? client.updateProxyProvider(row.name)
+        : client.updateRuleProvider(row.name);
   }
 
   void _invalidate() {
@@ -276,12 +279,16 @@ class _Row {
     required this.detail,
     required this.status,
     this.updatable = false,
+    this.offlineRef,
   });
 
   final String name;
   final String detail;
   final String status;
   final bool updatable;
+
+  /// Set on a config-sourced row, which the app refreshes by itself.
+  final ConfigProviderRef? offlineRef;
 }
 
 String _join(Iterable<String> parts) =>

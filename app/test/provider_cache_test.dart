@@ -68,6 +68,66 @@ void main() {
 
     expect(cached['ads']?.updatedAt, isNotNull);
   });
+
+  test('writes a downloaded body where the core reads it', () async {
+    final home = await Directory.systemTemp.createTemp('provider_cache_write');
+    addTearDown(() => home.delete(recursive: true));
+
+    const url = 'https://example.com/ads.yaml';
+    const ref = ConfigProviderRef(
+      section: ProviderSection.rules,
+      name: 'ads',
+      type: 'http',
+      url: url,
+    );
+
+    final cache = ProviderCache(homeDir: home);
+    await cache.write(ref, utf8.encode('payload: [example.com]'));
+
+    final expected = File(
+      '${home.path}/rules/${md5.convert(utf8.encode(url))}',
+    );
+    expect(expected.existsSync(), isTrue);
+    final cached = await cache.readWithStat([ref]);
+    expect(cached['ads']?.body, 'payload: [example.com]');
+    expect(cached['ads']?.updatedAt, isNotNull);
+  });
+
+  test('refuses to write a provider it cannot download', () async {
+    final home = await Directory.systemTemp.createTemp('provider_cache_deny');
+    addTearDown(() => home.delete(recursive: true));
+
+    final cache = ProviderCache(homeDir: home);
+
+    // Supplied by the user, so the app has nothing to download.
+    await expectLater(
+      cache.write(
+        const ConfigProviderRef(
+          section: ProviderSection.rules,
+          name: 'local',
+          type: 'file',
+          path: 'rules/local.yaml',
+        ),
+        const [0x00],
+      ),
+      throwsA(isA<FileSystemException>()),
+    );
+
+    // A path out of the core home must not steer the write.
+    await expectLater(
+      cache.write(
+        const ConfigProviderRef(
+          section: ProviderSection.rules,
+          name: 'escape',
+          type: 'http',
+          url: 'https://example.com/ads.yaml',
+          path: '../../escaped.yaml',
+        ),
+        const [0x00],
+      ),
+      throwsA(isA<FileSystemException>()),
+    );
+  });
 }
 
 Future<void> _write(

@@ -47,7 +47,7 @@
 
   "menuProxyProviders": "Proxy providers",
   "menuRuleProviders": "Rule providers",
-  "providersPreviewOnly": "Preview of the selected profile. Connect to update providers.",
+  "providersPreviewOnly": "Read from the selected profile and its cached files.",
   "providersEmpty": "This profile declares no providers.",
   "providersUpdateAll": "Update all",
   "providerNotDownloaded": "Not downloaded yet",

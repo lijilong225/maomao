@@ -8,6 +8,8 @@ import 'config_outline.dart';
 import 'profile_models.dart';
 import 'profile_repository.dart';
 import 'provider_cache.dart';
+import 'provider_updater.dart';
+import 'subscription_fetcher.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   final repository = ProfileRepository(
@@ -204,6 +206,18 @@ final profileControllerProvider =
 final providerCacheProvider = Provider<ProviderCache>(
   (ref) => const ProviderCache(),
 );
+
+/// Downloads a provider body straight into the core's cache.
+///
+/// Only used while the core is down; otherwise the controller refreshes it.
+final offlineProviderUpdaterProvider = Provider<OfflineProviderUpdater>((ref) {
+  final fetcher = SubscriptionFetcher();
+  ref.onDispose(fetcher.close);
+  return OfflineProviderUpdater(
+    fetcher: fetcher,
+    cache: ref.watch(providerCacheProvider),
+  );
+});
 
 /// Policy groups of the active profile as declared in its config file.
 ///

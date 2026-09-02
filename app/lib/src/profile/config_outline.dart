@@ -74,6 +74,20 @@ class ConfigProviderRef {
   /// and what leaves a cache file behind.
   bool get isFetched => type == 'http' || type == 'file';
 
+  /// Whether the app itself can refresh the body while the core is down, which
+  /// needs a URL to fetch. A `file` provider is supplied by the user and an
+  /// `inline` one lives in the config file, so neither is downloadable.
+  ///
+  /// A `path` that escapes the core home is refused too: a config file is
+  /// untrusted input, and the app must only ever write inside its own sandbox.
+  bool get isDownloadable {
+    if (type != 'http' || (url?.isEmpty ?? true)) return false;
+    final target = path;
+    if (target == null || target.isEmpty) return true;
+    return !target.startsWith('/') &&
+        !target.split(RegExp(r'[/\\]')).contains('..');
+  }
+
   /// Behaviour as the controller reports it, so an offline row reads like a
   /// live one.
   String get behaviorLabel => _behaviors[behavior] ?? behavior;

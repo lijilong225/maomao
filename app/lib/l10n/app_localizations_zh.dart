@@ -107,7 +107,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get menuRuleProviders => '规则集合';
 
   @override
-  String get providersPreviewOnly => '当前配置的预览。连接后可更新集合。';
+  String get providersPreviewOnly => '读取自当前配置及其缓存文件。';
 
   @override
   String get providersEmpty => '当前配置未声明集合。';

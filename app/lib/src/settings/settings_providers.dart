@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/core_models.dart';
@@ -71,6 +70,5 @@ final releaseCheckerProvider = Provider<ReleaseChecker>((ref) {
   return checker;
 });
 
-final appVersionProvider = FutureProvider<String>(
-  (ref) async => (await PackageInfo.fromPlatform()).version,
-);
+/// Installed version, never a failed or empty state.
+final appVersionProvider = FutureProvider<String>((ref) => currentAppVersion());
