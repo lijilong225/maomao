@@ -251,7 +251,7 @@ abstract class AppLocalizations {
   /// No description provided for @proxiesPreviewOnly.
   ///
   /// In en, this message translates to:
-  /// **'Preview of the selected profile. Connect to switch nodes and test latency.'**
+  /// **'Preview of the selected profile. Connect to switch nodes.'**
   String get proxiesPreviewOnly;
 
   /// No description provided for @proxiesMembersUnavailable.
@@ -266,11 +266,29 @@ abstract class AppLocalizations {
   /// **'Test latency'**
   String get testLatency;
 
+  /// No description provided for @testReachability.
+  ///
+  /// In en, this message translates to:
+  /// **'Test reachability'**
+  String get testReachability;
+
   /// No description provided for @latencyTestFailed.
   ///
   /// In en, this message translates to:
   /// **'Latency test failed: every node timed out.'**
   String get latencyTestFailed;
+
+  /// No description provided for @reachabilityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline the app can only time the handshake with each server, not the proxy itself.'**
+  String get reachabilityHint;
+
+  /// No description provided for @nodeUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'unreachable'**
+  String get nodeUnreachable;
 
   /// No description provided for @menuProxyProviders.
   ///

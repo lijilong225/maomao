@@ -90,7 +90,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get proxiesPreviewOnly =>
-      'Preview of the selected profile. Connect to switch nodes and test latency.';
+      'Preview of the selected profile. Connect to switch nodes.';
 
   @override
   String get proxiesMembersUnavailable =>
@@ -100,7 +100,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get testLatency => 'Test latency';
 
   @override
+  String get testReachability => 'Test reachability';
+
+  @override
   String get latencyTestFailed => 'Latency test failed: every node timed out.';
+
+  @override
+  String get reachabilityHint =>
+      'Offline the app can only time the handshake with each server, not the proxy itself.';
+
+  @override
+  String get nodeUnreachable => 'unreachable';
 
   @override
   String get menuProxyProviders => 'Proxy providers';

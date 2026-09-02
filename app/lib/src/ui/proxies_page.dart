@@ -38,7 +38,7 @@ class ProxiesPage extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
                   child: Text(
-                    l10n.proxiesPreviewOnly,
+                    '${l10n.proxiesPreviewOnly} ${l10n.reachabilityHint}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 );
@@ -63,7 +63,7 @@ class _GroupTile extends ConsumerStatefulWidget {
   final ProxyNode group;
   final Map<String, ProxyNode> nodes;
 
-  /// False while the core is down, which makes the list read-only.
+  /// False while the core is down, which keeps the selection read-only.
   final bool live;
 
   @override
@@ -78,56 +78,74 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
   bool get _canSelect => widget.live && group.isSelectable;
 
   @override
-  Widget build(BuildContext context) => Card(
-    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-    child: ExpansionTile(
-      title: Text(group.name),
-      subtitle: Text('${group.type} · ${group.now ?? '—'}'),
-      trailing: !widget.live
-          ? null
-          : _testing
-          ? const SizedBox(
-              width: 24,
-              height: 24,
-              child: Center(
-                child: SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final measured = widget.live
+        ? const <String, int>{}
+        : ref.watch(offlineLatencyProvider);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: ExpansionTile(
+        title: Text(group.name),
+        subtitle: Text('${group.type} · ${group.now ?? '—'}'),
+        trailing: _testing
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
+              )
+            : IconButton(
+                icon: const Icon(Icons.speed),
+                tooltip: widget.live ? l10n.testLatency : l10n.testReachability,
+                onPressed: _testGroup,
               ),
-            )
-          : IconButton(
-              icon: const Icon(Icons.speed),
-              tooltip: AppLocalizations.of(context).testLatency,
-              onPressed: _testGroup,
+        children: [
+          if (group.all.isEmpty)
+            ListTile(
+              dense: true,
+              enabled: false,
+              title: Text(l10n.proxiesMembersUnavailable),
             ),
-      children: [
-        if (group.all.isEmpty)
-          ListTile(
-            dense: true,
-            enabled: false,
-            title: Text(AppLocalizations.of(context).proxiesMembersUnavailable),
-          ),
-        for (final member in group.all)
-          ListTile(
-            dense: true,
-            enabled: _canSelect,
-            leading: Icon(
-              member == group.now
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-              size: 20,
+          for (final member in group.all)
+            ListTile(
+              dense: true,
+              enabled: _canSelect,
+              leading: Icon(
+                member == group.now
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                size: 20,
+              ),
+              title: Text(member),
+              trailing: widget.live
+                  ? Text(formatDelay(widget.nodes[member]?.latestDelay ?? 0))
+                  : _offlineResult(member, measured, l10n),
+              onTap: _canSelect ? () => _select(member) : null,
             ),
-            title: Text(member),
-            trailing: widget.live
-                ? Text(formatDelay(widget.nodes[member]?.latestDelay ?? 0))
-                : null,
-            onTap: _canSelect ? () => _select(member) : null,
-          ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
+
+  /// Nothing for a member the app cannot dial itself, such as DIRECT or a
+  /// nested group; otherwise the handshake time or a plain failure.
+  Widget? _offlineResult(
+    String member,
+    Map<String, int> measured,
+    AppLocalizations l10n,
+  ) {
+    if (!(widget.nodes[member]?.hasEndpoint ?? false)) return null;
+    final delay = measured[member];
+    if (delay == null) return Text(formatDelay(0));
+    return Text(delay > 0 ? formatDelay(delay) : l10n.nodeUnreachable);
+  }
 
   Future<void> _select(String? member) async {
     final client = ref.read(controllerClientProvider).valueOrNull;
@@ -141,19 +159,33 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
   }
 
   Future<void> _testGroup() async {
-    final client = ref.read(controllerClientProvider).valueOrNull;
-    if (client == null || _testing) return;
+    if (_testing) return;
     setState(() => _testing = true);
+    try {
+      await (widget.live ? _testViaCore() : _testEndpoints());
+    } finally {
+      if (mounted) setState(() => _testing = false);
+    }
+  }
+
+  Future<void> _testViaCore() async {
+    final client = ref.read(controllerClientProvider).valueOrNull;
+    if (client == null) return;
     try {
       await client.groupDelay(group.name);
       ref.invalidate(proxiesProvider);
     } catch (_) {
       // The controller answers 504 when every member times out.
       if (mounted) _notify(AppLocalizations.of(context).latencyTestFailed);
-    } finally {
-      if (mounted) setState(() => _testing = false);
     }
   }
+
+  /// Dials the members' servers directly; each row reports its own outcome.
+  Future<void> _testEndpoints() =>
+      ref.read(offlineLatencyProvider.notifier).measureAll([
+        for (final member in group.all)
+          if (widget.nodes[member] != null) widget.nodes[member]!,
+      ]);
 
   void _notify(String message) =>
       ScaffoldMessenger.of(context)

@@ -201,4 +201,25 @@ proxy-providers:
       ['remote', 'local'],
     );
   });
+
+  test('keeps node endpoints so they can be probed offline', () {
+    final outline = parseConfigOutline('''
+proxies:
+  - name: node-a
+    type: ss
+    server: a.example.com
+    port: 8388
+proxy-groups:
+  - name: Proxy
+    type: select
+    proxies: [node-a, DIRECT]
+''');
+
+    expect(outline.nodes['node-a']?.server, 'a.example.com');
+    expect(outline.nodes['node-a']?.port, 8388);
+    expect(outline.nodes['node-a']?.hasEndpoint, isTrue);
+    // Built-in outbounds and groups have no server to dial.
+    expect(outline.nodes['DIRECT']?.hasEndpoint, isNot(isTrue));
+    expect(outline.groups.single.hasEndpoint, isFalse);
+  });
 }

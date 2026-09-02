@@ -89,7 +89,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proxiesEmpty => '连接后加载策略组。';
 
   @override
-  String get proxiesPreviewOnly => '当前配置的预览。连接后可切换节点并测速。';
+  String get proxiesPreviewOnly => '当前配置的预览。连接后可切换节点。';
 
   @override
   String get proxiesMembersUnavailable => '成员需在配置更新一次后才可查看。';
@@ -98,7 +98,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get testLatency => '测试延迟';
 
   @override
+  String get testReachability => '检测可达性';
+
+  @override
   String get latencyTestFailed => '测速失败：所有节点均超时。';
+
+  @override
+  String get reachabilityHint => '未连接时只能测到各服务器的握手耗时，不经过代理本身。';
+
+  @override
+  String get nodeUnreachable => '不可达';
 
   @override
   String get menuProxyProviders => '代理集合';

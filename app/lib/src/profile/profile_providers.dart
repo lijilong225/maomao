@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/controller_models.dart';
 import '../core/core_providers.dart';
 import 'config_outline.dart';
+import 'latency_probe.dart';
 import 'profile_models.dart';
 import 'profile_repository.dart';
 import 'provider_cache.dart';
@@ -235,6 +236,47 @@ final activeProfileOutlineProvider = FutureProvider<ProxySnapshot>((ref) async {
       .read(parseConfigProviders(body));
   return parseConfigOutline(body, providerBodies: bodies);
 });
+
+/// Handshake timings the app measured itself, keyed by node name; 0 means the
+/// server never answered.
+///
+/// Kept out of [activeProfileOutlineProvider] because that snapshot is rebuilt
+/// on every refresh and carries no latency history.
+class OfflineLatencyController extends StateNotifier<Map<String, int>> {
+  OfflineLatencyController(this._probe) : super(const {});
+
+  final LatencyProbe _probe;
+
+  /// Servers dialled at once, so a provider with hundreds of nodes does not
+  /// open hundreds of sockets.
+  static const _parallelism = 8;
+
+  Future<void> measureAll(Iterable<ProxyNode> nodes) async {
+    final targets = [
+      for (final node in nodes)
+        if (node.hasEndpoint) node,
+    ];
+    var next = 0;
+
+    Future<void> worker() async {
+      while (next < targets.length) {
+        final node = targets[next++];
+        final delay = await _probe.measure(node.server!, node.port!);
+        if (!mounted) return;
+        state = {...state, node.name: delay};
+      }
+    }
+
+    await Future.wait([
+      for (var i = 0; i < _parallelism && i < targets.length; i++) worker(),
+    ]);
+  }
+}
+
+final offlineLatencyProvider =
+    StateNotifierProvider<OfflineLatencyController, Map<String, int>>(
+      (ref) => OfflineLatencyController(const LatencyProbe()),
+    );
 
 /// One provider collection of the active profile, read from its config file and
 /// the bodies the core cached on disk.

@@ -40,10 +40,13 @@
     }
   },
   "proxiesEmpty": "Connect to load policy groups.",
-  "proxiesPreviewOnly": "Preview of the selected profile. Connect to switch nodes and test latency.",
+  "proxiesPreviewOnly": "Preview of the selected profile. Connect to switch nodes.",
   "proxiesMembersUnavailable": "Members are known only after the profile has been updated once.",
   "testLatency": "Test latency",
+  "testReachability": "Test reachability",
   "latencyTestFailed": "Latency test failed: every node timed out.",
+  "reachabilityHint": "Offline the app can only time the handshake with each server, not the proxy itself.",
+  "nodeUnreachable": "unreachable",
 
   "menuProxyProviders": "Proxy providers",
   "menuRuleProviders": "Rule providers",

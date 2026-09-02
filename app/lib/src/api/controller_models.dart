@@ -21,6 +21,8 @@ class ProxyNode {
     this.now,
     this.all = const [],
     this.alive = true,
+    this.server,
+    this.port,
   });
 
   final String name;
@@ -35,7 +37,16 @@ class ProxyNode {
   final List<String> all;
   final bool alive;
 
+  /// Endpoint read from the config file. The controller never reports it, so it
+  /// is only set on nodes parsed offline.
+  final String? server;
+  final int? port;
+
   bool get isGroup => all.isNotEmpty;
+
+  /// Whether the app can reach the endpoint on its own, without the core.
+  bool get hasEndpoint =>
+      !isGroup && (server?.isNotEmpty ?? false) && (port ?? 0) > 0;
 
   /// Group types the core lets the user switch directly. These are exactly the
   /// ones implementing `outboundgroup.SelectAble`; picking a member of an

@@ -30,10 +30,13 @@
 
   "proxiesUnavailable": "不可用：{error}",
   "proxiesEmpty": "连接后加载策略组。",
-  "proxiesPreviewOnly": "当前配置的预览。连接后可切换节点并测速。",
+  "proxiesPreviewOnly": "当前配置的预览。连接后可切换节点。",
   "proxiesMembersUnavailable": "成员需在配置更新一次后才可查看。",
   "testLatency": "测试延迟",
+  "testReachability": "检测可达性",
   "latencyTestFailed": "测速失败：所有节点均超时。",
+  "reachabilityHint": "未连接时只能测到各服务器的握手耗时，不经过代理本身。",
+  "nodeUnreachable": "不可达",
 
   "menuProxyProviders": "代理集合",
   "menuRuleProviders": "规则集合",

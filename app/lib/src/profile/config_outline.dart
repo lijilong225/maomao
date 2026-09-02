@@ -322,7 +322,15 @@ List<_Node> _parseNodes(Object? raw) {
     final name = entry['name'];
     if (name is! String || name.isEmpty) continue;
     final type = entry['type'];
-    nodes.add(_Node(name, type is String ? type : ''));
+    final server = entry['server'];
+    nodes.add(
+      _Node(
+        name,
+        type is String ? type : '',
+        server is String ? server : null,
+        (entry['port'] as num?)?.toInt(),
+      ),
+    );
   }
   return nodes;
 }
@@ -338,13 +346,17 @@ ProxyNode _leaf(_Node node) => ProxyNode(
   type: node.type.isEmpty ? 'Unknown' : node.type,
   udp: false,
   history: const [],
+  server: node.server,
+  port: node.port,
 );
 
 class _Node {
-  const _Node(this.name, this.type);
+  const _Node(this.name, this.type, this.server, this.port);
 
   final String name;
   final String type;
+  final String? server;
+  final int? port;
 }
 
 /// The `filter` / `exclude-filter` / `exclude-type` trio shared by groups and
