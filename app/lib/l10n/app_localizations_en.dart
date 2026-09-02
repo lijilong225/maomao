@@ -90,7 +90,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get proxiesPreviewOnly =>
-      'Preview of the selected profile. Connect to switch nodes.';
+      'Preview of the selected profile. A node picked here applies on the next connect.';
 
   @override
   String get proxiesMembersUnavailable =>

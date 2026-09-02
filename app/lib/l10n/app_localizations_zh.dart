@@ -89,7 +89,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proxiesEmpty => '连接后加载策略组。';
 
   @override
-  String get proxiesPreviewOnly => '当前配置的预览。连接后可切换节点。';
+  String get proxiesPreviewOnly => '当前配置的预览。这里选择的节点将在下次连接时生效。';
 
   @override
   String get proxiesMembersUnavailable => '成员需在配置更新一次后才可查看。';

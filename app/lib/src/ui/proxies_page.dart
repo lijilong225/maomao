@@ -63,7 +63,8 @@ class _GroupTile extends ConsumerStatefulWidget {
   final ProxyNode group;
   final Map<String, ProxyNode> nodes;
 
-  /// False while the core is down, which keeps the selection read-only.
+  /// False while the core is down, which is when latency has to be measured by
+  /// the app itself and a selection can only be recorded for later.
   final bool live;
 
   @override
@@ -75,7 +76,7 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
 
   ProxyNode get group => widget.group;
 
-  bool get _canSelect => widget.live && group.isSelectable;
+  bool get _canSelect => group.isSelectable;
 
   @override
   Widget build(BuildContext context) {
@@ -83,12 +84,16 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
     final measured = widget.live
         ? const <String, int>{}
         : ref.watch(offlineLatencyProvider);
+    // While the core runs it owns the selection, so trust what it reports.
+    final current = widget.live
+        ? group.now
+        : ref.watch(proxySelectionProvider)[group.name] ?? group.now;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ExpansionTile(
         title: Text(group.name),
-        subtitle: Text('${group.type} · ${group.now ?? '—'}'),
+        subtitle: Text('${group.type} · ${current ?? '—'}'),
         trailing: _testing
             ? const SizedBox(
                 width: 24,
@@ -118,7 +123,7 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
               dense: true,
               enabled: _canSelect,
               leading: Icon(
-                member == group.now
+                member == current
                     ? Icons.radio_button_checked
                     : Icons.radio_button_unchecked,
                 size: 20,
@@ -148,8 +153,10 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
   }
 
   Future<void> _select(String? member) async {
+    if (member == null) return;
+    await ref.read(proxySelectionProvider.notifier).select(group.name, member);
     final client = ref.read(controllerClientProvider).valueOrNull;
-    if (client == null || member == null) return;
+    if (client == null) return;
     try {
       await client.selectProxy(group.name, member);
       ref.invalidate(proxiesProvider);

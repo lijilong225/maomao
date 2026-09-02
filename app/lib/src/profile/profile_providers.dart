@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../api/controller_client.dart';
 import '../api/controller_models.dart';
 import '../core/core_providers.dart';
 import 'config_outline.dart';
@@ -10,6 +11,7 @@ import 'profile_models.dart';
 import 'profile_repository.dart';
 import 'provider_cache.dart';
 import 'provider_updater.dart';
+import 'selection_store.dart';
 import 'subscription_fetcher.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
@@ -277,6 +279,58 @@ final offlineLatencyProvider =
     StateNotifierProvider<OfflineLatencyController, Map<String, int>>(
       (ref) => OfflineLatencyController(const LatencyProbe()),
     );
+
+/// Member picked for each policy group, by group name.
+///
+/// While the core runs it owns the selection; this mirror exists so a choice
+/// made with the tunnel down is not lost and can be replayed on the next start.
+class ProxySelectionController extends StateNotifier<Map<String, String>> {
+  ProxySelectionController(this._store, this._profileId) : super(const {}) {
+    _restore();
+  }
+
+  final ProxySelectionStore _store;
+  final String? _profileId;
+
+  Future<void> _restore() async {
+    final stored = await _store.load(_profileId);
+    if (!mounted || stored.isEmpty) return;
+    // A choice made before the disk read finished wins.
+    state = {...stored, ...state};
+  }
+
+  Future<void> select(String group, String member) async {
+    state = {...state, group: member};
+    await _store.save(_profileId, state);
+  }
+
+  /// Hands every remembered choice to the core; groups it no longer knows are
+  /// rejected one by one and skipped.
+  Future<void> pushTo(ControllerClient client) async {
+    for (final entry in state.entries) {
+      try {
+        await client.selectProxy(entry.key, entry.value);
+      } catch (_) {
+        continue;
+      }
+    }
+  }
+}
+
+final proxySelectionProvider =
+    StateNotifierProvider<ProxySelectionController, Map<String, String>>((ref) {
+      final controller = ProxySelectionController(
+        const ProxySelectionStore(),
+        ref.watch(profileControllerProvider.select((state) => state.activeId)),
+      );
+      ref.listen(controllerClientProvider, (_, next) async {
+        final client = next.valueOrNull;
+        if (client == null) return;
+        await controller.pushTo(client);
+        ref.invalidate(proxiesProvider);
+      });
+      return controller;
+    });
 
 /// One provider collection of the active profile, read from its config file and
 /// the bodies the core cached on disk.

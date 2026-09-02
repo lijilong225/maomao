@@ -251,7 +251,7 @@ abstract class AppLocalizations {
   /// No description provided for @proxiesPreviewOnly.
   ///
   /// In en, this message translates to:
-  /// **'Preview of the selected profile. Connect to switch nodes.'**
+  /// **'Preview of the selected profile. A node picked here applies on the next connect.'**
   String get proxiesPreviewOnly;
 
   /// No description provided for @proxiesMembersUnavailable.
