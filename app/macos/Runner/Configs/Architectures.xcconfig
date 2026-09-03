@@ -1,0 +1,4 @@
+// Only Apple Silicon is supported: the bundled mihomo sidecar is built for
+// darwin/arm64, so keep the app slice-compatible with it.
+ARCHS = arm64
+EXCLUDED_ARCHS = x86_64

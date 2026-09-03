@@ -16,7 +16,9 @@ import 'core_models.dart';
 class CoreProcessBackend extends CoreBackend {
   CoreProcessBackend({this.executablePath, this.homeDirectory});
 
-  static const _executableName = 'maomao-core.exe';
+  static final _executableName = Platform.isWindows
+      ? 'maomao-core.exe'
+      : 'maomao-core';
 
   /// Defaults to the sidecar shipped next to the app executable.
   final String? executablePath;

@@ -18,10 +18,11 @@ app/android/key.properties
 *.jks
 *.keystore
 
-# Native build artifacts (regenerate with `make -C core android` / `windows`)
+# Native build artifacts (regenerate with `make -C core android` / `windows` / `macos`)
 app/android/app/libs/*.aar
 app/android/app/libs/*.jar
 app/windows/libs/*.exe
+app/macos/libs/maomao-core
 *.so
 
 # Go

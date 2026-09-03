@@ -25,7 +25,12 @@ WINDOWS_TAGS ?= with_gvisor
 WINDOWS_ARCH ?= amd64
 WINDOWS_OUT ?= ../app/windows/libs/maomao-core.exe
 
-.PHONY: android android-check windows windows-check clean
+# macOS ships as a sidecar too, and only Apple Silicon is supported.
+MACOS_TAGS ?= with_gvisor
+MACOS_ARCH ?= arm64
+MACOS_OUT ?= ../app/macos/libs/maomao-core
+
+.PHONY: android android-check windows windows-check macos macos-check clean
 
 android-check:
 	GOOS=android GOARCH=arm64 CGO_ENABLED=1 \
@@ -59,5 +64,19 @@ windows:
 		-o $(WINDOWS_OUT) \
 		./cmd/maomao-core
 
+macos-check:
+	GOOS=darwin GOARCH=$(MACOS_ARCH) CGO_ENABLED=0 \
+	go build -tags "$(MACOS_TAGS)" ./...
+
+macos:
+	mkdir -p $(dir $(MACOS_OUT))
+	GOOS=darwin GOARCH=$(MACOS_ARCH) CGO_ENABLED=0 \
+	go build \
+		-tags "$(MACOS_TAGS)" \
+		-trimpath \
+		-ldflags "$(LDFLAGS)" \
+		-o $(MACOS_OUT) \
+		./cmd/maomao-core
+
 clean:
-	rm -f $(AAR_OUT) $(basename $(AAR_OUT))-sources.jar $(WINDOWS_OUT)
+	rm -f $(AAR_OUT) $(basename $(AAR_OUT))-sources.jar $(WINDOWS_OUT) $(MACOS_OUT)

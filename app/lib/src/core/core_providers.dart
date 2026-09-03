@@ -13,9 +13,10 @@ import 'core_service.dart';
 import 'geo_assets.dart';
 
 /// Android links the core into the app process and reaches it over platform
-/// channels; Windows drives it as a sidecar process instead.
-CoreBackend createCoreBackend() =>
-    Platform.isWindows ? CoreProcessBackend() : CoreChannel();
+/// channels; desktop hosts drive it as a sidecar process instead.
+CoreBackend createCoreBackend() => Platform.isWindows || Platform.isMacOS
+    ? CoreProcessBackend()
+    : CoreChannel();
 
 final coreServiceProvider = Provider<CoreService>((ref) {
   final service = CoreService(channel: createCoreBackend());
