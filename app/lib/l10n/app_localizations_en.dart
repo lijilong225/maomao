@@ -100,11 +100,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get testLatency => 'Test latency';
 
   @override
+  String get testReachability => 'Test reachability';
+
+  @override
   String get latencyTestFailed => 'Latency test failed: every node timed out.';
 
   @override
-  String get offlineLatencyHint =>
-      'Latency can be measured offline too: the core dials each node in turn without bringing up the tunnel.';
+  String get reachabilityHint =>
+      'Offline the app can only time the handshake with each server, not the proxy itself.';
 
   @override
   String get nodeUnreachable => 'unreachable';

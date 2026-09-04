@@ -266,17 +266,23 @@ abstract class AppLocalizations {
   /// **'Test latency'**
   String get testLatency;
 
+  /// No description provided for @testReachability.
+  ///
+  /// In en, this message translates to:
+  /// **'Test reachability'**
+  String get testReachability;
+
   /// No description provided for @latencyTestFailed.
   ///
   /// In en, this message translates to:
   /// **'Latency test failed: every node timed out.'**
   String get latencyTestFailed;
 
-  /// No description provided for @offlineLatencyHint.
+  /// No description provided for @reachabilityHint.
   ///
   /// In en, this message translates to:
-  /// **'Latency can be measured offline too: the core dials each node in turn without bringing up the tunnel.'**
-  String get offlineLatencyHint;
+  /// **'Offline the app can only time the handshake with each server, not the proxy itself.'**
+  String get reachabilityHint;
 
   /// No description provided for @nodeUnreachable.
   ///

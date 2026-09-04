@@ -98,10 +98,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get testLatency => '测试延迟';
 
   @override
+  String get testReachability => '检测可达性';
+
+  @override
   String get latencyTestFailed => '测速失败：所有节点均超时。';
 
   @override
-  String get offlineLatencyHint => '未连接时也能测速：内核会逐个接入节点并计时，不建立隧道。';
+  String get reachabilityHint => '未连接时只能测到各服务器的握手耗时，不经过代理本身。';
 
   @override
   String get nodeUnreachable => '不可达';

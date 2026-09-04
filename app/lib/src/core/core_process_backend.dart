@@ -80,15 +80,6 @@ class CoreProcessBackend extends CoreBackend {
   Future<Traffic> trafficTotal() async =>
       Traffic.fromMap(await _invoke<Map<dynamic, dynamic>>('trafficTotal'));
 
-  @override
-  Future<Map<String, int>> probeDelay(DelayProbeRequest request) async =>
-      decodeDelayProbe(
-        await _invoke<Map<dynamic, dynamic>>(
-          'probeDelay',
-          request.toArguments(),
-        ),
-      );
-
   /// Per-app proxying is an Android capability.
   @override
   Future<List<InstalledApp>> installedApps() async => const [];

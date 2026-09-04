@@ -163,18 +163,6 @@ func dispatch(req request) (any, *frameError) {
 	case "stop":
 		bridge.Stop()
 		return nil, nil
-	case "probeDelay":
-		var args struct {
-			Request string `json:"request"`
-		}
-		if failure := decodeArgs(req.Args, &args); failure != nil {
-			return nil, failure
-		}
-		probed, err := bridge.ProbeDelay(args.Request)
-		if err != nil {
-			return nil, &frameError{Code: "probe_failed", Message: err.Error()}
-		}
-		return json.RawMessage(probed), nil
 	default:
 		return nil, &frameError{Code: "unimplemented", Message: req.Method}
 	}

@@ -4,10 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/controller_client.dart';
 import '../api/controller_models.dart';
-import '../core/core_backend.dart';
-import '../core/core_models.dart';
 import '../core/core_providers.dart';
-import '../core/core_service.dart';
 import 'config_outline.dart';
 import 'latency_probe.dart';
 import 'profile_models.dart';
@@ -242,23 +239,15 @@ final activeProfileOutlineProvider = FutureProvider<ProxySnapshot>((ref) async {
   return parseConfigOutline(body, providerBodies: bodies);
 });
 
-/// Delay measured by the app itself, keyed by node name; 0 means the node never
-/// answered.
+/// Handshake timings the app measured itself, keyed by node name; 0 means the
+/// server never answered.
 ///
 /// Kept out of [activeProfileOutlineProvider] because that snapshot is rebuilt
 /// on every refresh and carries no latency history.
 class OfflineLatencyController extends StateNotifier<Map<String, int>> {
-  OfflineLatencyController({
-    required this.probe,
-    required this.core,
-    required this.loadSource,
-  }) : super(const {});
+  OfflineLatencyController(this._probe) : super(const {});
 
-  final LatencyProbe probe;
-  final CoreService core;
-
-  /// Reads the profile the core has to rebuild, or null when none is active.
-  final Future<DelayProbeSource?> Function() loadSource;
+  final LatencyProbe _probe;
 
   /// Servers dialled at once, so a provider with hundreds of nodes does not
   /// open hundreds of sockets.
@@ -269,44 +258,12 @@ class OfflineLatencyController extends StateNotifier<Map<String, int>> {
       for (final node in nodes)
         if (node.hasEndpoint) node,
     ];
-    if (targets.isEmpty) return;
-
-    final measured = await _probeViaCore(targets);
-    if (!mounted) return;
-    if (measured.isNotEmpty) state = {...state, ...measured};
-
-    // A node the core could not rebuild, for example because its protocol needs
-    // a build tag this release omits, still gets the handshake lower bound.
-    await _handshake([
-      for (final node in targets)
-        if (!measured.containsKey(node.name)) node,
-    ]);
-  }
-
-  Future<Map<String, int>> _probeViaCore(List<ProxyNode> targets) async {
-    final source = await loadSource();
-    if (source == null) return const {};
-    try {
-      return await core.probeDelay(
-        DelayProbeRequest(
-          configYaml: source.configYaml,
-          providerBodies: source.providerBodies,
-          names: [for (final node in targets) node.name],
-          concurrency: _parallelism,
-        ),
-      );
-    } on CoreException {
-      return const {};
-    }
-  }
-
-  Future<void> _handshake(List<ProxyNode> targets) async {
     var next = 0;
 
     Future<void> worker() async {
       while (next < targets.length) {
         final node = targets[next++];
-        final delay = await probe.measure(node.server!, node.port!);
+        final delay = await _probe.measure(node.server!, node.port!);
         if (!mounted) return;
         state = {...state, node.name: delay};
       }
@@ -318,27 +275,10 @@ class OfflineLatencyController extends StateNotifier<Map<String, int>> {
   }
 }
 
-/// What the core needs to rebuild the active profile's nodes for a probe.
-typedef DelayProbeSource =
-    ({String configYaml, Map<String, String> providerBodies});
-
 final offlineLatencyProvider =
-    StateNotifierProvider<OfflineLatencyController, Map<String, int>>((ref) {
-      return OfflineLatencyController(
-        probe: const LatencyProbe(),
-        core: ref.watch(coreServiceProvider),
-        loadSource: () async {
-          final id = ref.read(profileControllerProvider).activeId;
-          if (id == null) return null;
-          final body = await ref.read(profileRepositoryProvider).readBody(id);
-          if (body == null) return null;
-          final bodies = await ref
-              .read(providerCacheProvider)
-              .read(parseConfigProviders(body));
-          return (configYaml: body, providerBodies: bodies);
-        },
-      );
-    });
+    StateNotifierProvider<OfflineLatencyController, Map<String, int>>(
+      (ref) => OfflineLatencyController(const LatencyProbe()),
+    );
 
 /// Member picked for each policy group, by group name.
 ///
