@@ -106,6 +106,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get latencyTestFailed => 'Latency test failed: every node timed out.';
 
   @override
+  String nodeTestFailed(String name) {
+    return '$name: latency test failed.';
+  }
+
+  @override
   String get reachabilityHint =>
       'Offline the app can only time the handshake with each server, not the proxy itself.';
 

@@ -104,6 +104,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get latencyTestFailed => '测速失败：所有节点均超时。';
 
   @override
+  String nodeTestFailed(String name) {
+    return '$name：测速失败。';
+  }
+
+  @override
   String get reachabilityHint => '未连接时只能测到各服务器的握手耗时，不经过代理本身。';
 
   @override

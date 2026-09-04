@@ -45,6 +45,12 @@
   "testLatency": "Test latency",
   "testReachability": "Test reachability",
   "latencyTestFailed": "Latency test failed: every node timed out.",
+  "nodeTestFailed": "{name}: latency test failed.",
+  "@nodeTestFailed": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "reachabilityHint": "Offline the app can only time the handshake with each server, not the proxy itself.",
   "nodeUnreachable": "unreachable",
 

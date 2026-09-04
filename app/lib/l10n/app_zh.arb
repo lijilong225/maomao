@@ -35,6 +35,7 @@
   "testLatency": "测试延迟",
   "testReachability": "检测可达性",
   "latencyTestFailed": "测速失败：所有节点均超时。",
+  "nodeTestFailed": "{name}：测速失败。",
   "reachabilityHint": "未连接时只能测到各服务器的握手耗时，不经过代理本身。",
   "nodeUnreachable": "不可达",
 
