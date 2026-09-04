@@ -10,7 +10,7 @@ const _latestReleaseApi =
 /// Version compiled into the app, used when the platform side cannot answer.
 ///
 /// Must stay in sync with `version:` in `pubspec.yaml`; a test enforces it.
-const fallbackAppVersion = '1.0.8';
+const fallbackAppVersion = '1.0.9';
 
 /// Installed version, falling back to [fallbackAppVersion] instead of failing.
 ///
