@@ -52,6 +52,11 @@ class CoreService {
 
   Future<List<InstalledApp>> installedApps() => _channel.installedApps();
 
+  /// Node delay measured through each node, needing neither a running tunnel
+  /// nor the VPN permission.
+  Future<Map<String, int>> probeDelay(DelayProbeRequest request) =>
+      _channel.probeDelay(request);
+
   Future<void> validateConfig(String configPath) =>
       _channel.validateConfig(configPath);
 

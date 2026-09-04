@@ -38,7 +38,7 @@ class ProxiesPage extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
                   child: Text(
-                    '${l10n.proxiesPreviewOnly} ${l10n.reachabilityHint}',
+                    '${l10n.proxiesPreviewOnly} ${l10n.offlineLatencyHint}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 );
@@ -108,7 +108,7 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
               )
             : IconButton(
                 icon: const Icon(Icons.speed),
-                tooltip: widget.live ? l10n.testLatency : l10n.testReachability,
+                tooltip: l10n.testLatency,
                 onPressed: _testGroup,
               ),
         children: [
@@ -140,7 +140,7 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
   }
 
   /// Nothing for a member the app cannot dial itself, such as DIRECT or a
-  /// nested group; otherwise the handshake time or a plain failure.
+  /// nested group; otherwise the measured delay or a plain failure.
   Widget? _offlineResult(
     String member,
     Map<String, int> measured,
@@ -187,7 +187,8 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
     }
   }
 
-  /// Dials the members' servers directly; each row reports its own outcome.
+  /// Rebuilds the members as standalone outbounds and times a request through
+  /// each; every row reports its own outcome.
   Future<void> _testEndpoints() =>
       ref.read(offlineLatencyProvider.notifier).measureAll([
         for (final member in group.all)

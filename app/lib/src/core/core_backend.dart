@@ -74,6 +74,11 @@ abstract class CoreBackend {
 
   Future<Traffic> trafficTotal();
 
+  /// Delay in milliseconds per node name, measured through the node itself
+  /// without bringing up the tunnel. 0 means the node answered nothing, and a
+  /// node the core cannot build at all is absent from the result.
+  Future<Map<String, int>> probeDelay(DelayProbeRequest request);
+
   /// Empty where per-app proxying is not a platform capability.
   Future<List<InstalledApp>> installedApps();
 

@@ -92,6 +92,9 @@ object CoreBridge : Delegate {
     fun mergeConfig(baseYaml: String, patchYaml: String): String =
         Bridge.mergeConfig(baseYaml, patchYaml)
 
+    /** Blocks while every requested node is dialled; see [Bridge.probeDelay] for the payloads. */
+    fun probeDelay(requestJson: String): String = Bridge.probeDelay(requestJson)
+
     /**
      * TUN parameters derived from the config. The core narrows fake-ip-range to a
      * /30 and ignores host overrides, so the VpnService builder must mirror these.

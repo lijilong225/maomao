@@ -6,6 +6,8 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import com.maomao.proxy.maomao.core.CoreBridge
 import com.maomao.proxy.maomao.vpn.VpnLauncher
 import com.maomao.proxy.maomao.vpn.VpnOptions
@@ -137,8 +139,32 @@ class MaomaoPlugin :
 
             "installedApps" -> result.success(installedApps())
 
+            "probeDelay" -> probeDelay(call, result)
+
             else -> result.notImplemented()
         }
+    }
+
+    /**
+     * Measures node delay without a tunnel, so it deliberately skips the VPN
+     * permission check that [start] enforces. The core dials every node, which
+     * blocks for as long as the slowest handshake takes.
+     */
+    private fun probeDelay(call: MethodCall, result: MethodChannel.Result) {
+        val request = call.argument<String>("request")
+        if (request == null) {
+            result.error("invalid_argument", "request is required", null)
+            return
+        }
+        val main = Handler(Looper.getMainLooper())
+        Thread {
+            try {
+                val probed = CoreBridge.probeDelay(request)
+                main.post { result.success(probed) }
+            } catch (e: Exception) {
+                main.post { result.error("probe_failed", e.message, null) }
+            }
+        }.start()
     }
 
     private fun start(call: MethodCall, result: MethodChannel.Result) {

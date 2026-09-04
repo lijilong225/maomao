@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
@@ -74,6 +75,13 @@ class CoreChannel extends CoreBackend {
   @override
   Future<Traffic> trafficTotal() async =>
       Traffic.fromMap(await _invoke<Map<dynamic, dynamic>>('trafficTotal'));
+
+  @override
+  Future<Map<String, int>> probeDelay(DelayProbeRequest request) async {
+    final raw = await _invoke<String>('probeDelay', request.toArguments());
+    if (raw == null || raw.isEmpty) return const {};
+    return decodeDelayProbe(jsonDecode(raw) as Map<dynamic, dynamic>);
+  }
 
   @override
   Future<List<InstalledApp>> installedApps() async {

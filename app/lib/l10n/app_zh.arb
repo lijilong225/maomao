@@ -33,9 +33,8 @@
   "proxiesPreviewOnly": "当前配置的预览。这里选择的节点将在下次连接时生效。",
   "proxiesMembersUnavailable": "成员需在配置更新一次后才可查看。",
   "testLatency": "测试延迟",
-  "testReachability": "检测可达性",
   "latencyTestFailed": "测速失败：所有节点均超时。",
-  "reachabilityHint": "未连接时只能测到各服务器的握手耗时，不经过代理本身。",
+  "offlineLatencyHint": "未连接时也能测速：内核会逐个接入节点并计时，不建立隧道。",
   "nodeUnreachable": "不可达",
 
   "menuProxyProviders": "代理集合",
