@@ -77,6 +77,8 @@ class _ConnectionCard extends StatelessWidget {
     required this.onToggle,
   });
 
+  static const _transition = Duration(milliseconds: 280);
+
   final CoreState state;
   final bool busy;
   final String? profileName;
@@ -85,43 +87,105 @@ class _ConnectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final active = state.isActive;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final enabled = onToggle != null;
+
+    // `starting` gets its own colours so a tap reads as acknowledged well before
+    // the tunnel is actually up.
+    final (background, foreground) = switch (enabled ? state : null) {
+      CoreState.running => (scheme.primary, scheme.onPrimary),
+      CoreState.starting => (
+        scheme.primaryContainer,
+        scheme.onPrimaryContainer,
+      ),
+      CoreState.stopped => (
+        scheme.surfaceContainerHighest,
+        scheme.onSurfaceVariant,
+      ),
+      null => (scheme.surfaceContainerHighest, theme.disabledColor),
+    };
+    final pending = busy || state == CoreState.starting;
+    final label = switch (state) {
+      CoreState.running => l10n.stateConnected,
+      CoreState.starting => l10n.stateConnecting,
+      CoreState.stopped => l10n.stateDisconnected,
+    };
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            IconButton.filled(
-              iconSize: 56,
-              padding: const EdgeInsets.all(20),
-              onPressed: busy ? null : onToggle,
-              style: IconButton.styleFrom(
-                backgroundColor: active
-                    ? scheme.primary
-                    : scheme.surfaceContainerHighest,
-                foregroundColor: active
-                    ? scheme.onPrimary
-                    : scheme.onSurfaceVariant,
+            SizedBox.square(
+              dimension: 104,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedSwitcher(
+                    duration: _transition,
+                    child: pending
+                        ? SizedBox.square(
+                            dimension: 104,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              color: scheme.primary,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  AnimatedContainer(
+                    duration: _transition,
+                    curve: Curves.easeOut,
+                    decoration: BoxDecoration(
+                      color: background,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Material(
+                      type: MaterialType.transparency,
+                      shape: const CircleBorder(),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: busy ? null : onToggle,
+                        child: SizedBox.square(
+                          dimension: 88,
+                          child: Center(
+                            child: TweenAnimationBuilder<Color?>(
+                              duration: _transition,
+                              tween: ColorTween(end: foreground),
+                              builder: (context, color, _) => AnimatedSwitcher(
+                                duration: _transition,
+                                child: Icon(
+                                  state == CoreState.running
+                                      ? Icons.shield
+                                      : Icons.shield_outlined,
+                                  key: ValueKey(state == CoreState.running),
+                                  size: 44,
+                                  color: color,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              icon: busy
-                  ? const SizedBox.square(
-                      dimension: 56,
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : Icon(active ? Icons.shield : Icons.shield_outlined),
             ),
             const SizedBox(height: 16),
-            Text(switch (state) {
-              CoreState.running => l10n.stateConnected,
-              CoreState.starting => l10n.stateConnecting,
-              CoreState.stopped => l10n.stateDisconnected,
-            }, style: Theme.of(context).textTheme.titleLarge),
+            AnimatedSwitcher(
+              duration: _transition,
+              child: Text(
+                label,
+                key: ValueKey(label),
+                style: theme.textTheme.titleLarge,
+              ),
+            ),
             const SizedBox(height: 4),
             Text(
               profileName ?? l10n.noProfileSelected,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium,
             ),
           ],
         ),

@@ -6,6 +6,8 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import com.maomao.proxy.maomao.core.CoreBridge
 import com.maomao.proxy.maomao.vpn.VpnLauncher
 import com.maomao.proxy.maomao.vpn.VpnOptions
@@ -16,6 +18,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
+import java.util.concurrent.Executors
 
 /**
  * Bridges the Flutter layer to the embedded core and the VPN service.
@@ -36,6 +39,13 @@ class MaomaoPlugin :
     private lateinit var eventChannel: EventChannel
     private var events: EventChannel.EventSink? = null
 
+    /**
+     * Parsing a config loads the geo databases and builds every outbound, which
+     * takes long enough to drop frames if it runs on the platform thread.
+     */
+    private val worker = Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
+
     private var activityBinding: ActivityPluginBinding? = null
     private var pendingPrepare: MethodChannel.Result? = null
 
@@ -52,6 +62,7 @@ class MaomaoPlugin :
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         methodChannel.setMethodCallHandler(null)
         eventChannel.setStreamHandler(null)
+        worker.shutdown()
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -86,11 +97,9 @@ class MaomaoPlugin :
                     result.error("invalid_argument", "configPath is required", null)
                     return
                 }
-                try {
+                offload(result, "invalid_config") {
                     CoreBridge.validateConfig(path)
-                    result.success(true)
-                } catch (e: Exception) {
-                    result.error("invalid_config", e.message, null)
+                    true
                 }
             }
 
@@ -100,21 +109,13 @@ class MaomaoPlugin :
                     result.error("invalid_argument", "raw is required", null)
                     return
                 }
-                try {
-                    result.success(CoreBridge.convertSubscription(raw))
-                } catch (e: Exception) {
-                    result.error("invalid_subscription", e.message, null)
-                }
+                offload(result, "invalid_subscription") { CoreBridge.convertSubscription(raw) }
             }
 
             "mergeConfig" -> {
                 val base = call.argument<String>("base") ?: ""
                 val patch = call.argument<String>("patch") ?: ""
-                try {
-                    result.success(CoreBridge.mergeConfig(base, patch))
-                } catch (e: Exception) {
-                    result.error("invalid_config", e.message, null)
-                }
+                offload(result, "invalid_config") { CoreBridge.mergeConfig(base, patch) }
             }
 
             "start" -> start(call, result)
@@ -135,9 +136,25 @@ class MaomaoPlugin :
                 result.success(mapOf("up" to traffic.up, "down" to traffic.down))
             }
 
-            "installedApps" -> result.success(installedApps())
+            "installedApps" -> offload(result, "query_failed") { installedApps() }
 
             else -> result.notImplemented()
+        }
+    }
+
+    private fun <T> offload(
+        result: MethodChannel.Result,
+        errorCode: String,
+        block: () -> T,
+    ) {
+        worker.execute {
+            val outcome = runCatching(block)
+            main.post {
+                outcome.fold(
+                    onSuccess = { result.success(it) },
+                    onFailure = { result.error(errorCode, it.message, null) },
+                )
+            }
         }
     }
 

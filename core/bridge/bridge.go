@@ -197,8 +197,13 @@ func Start(optionsJSON string) error {
 		return fmt.Errorf("invalid options: %w", err)
 	}
 
+	// Announced before the parse so the UI can react on the first frame; parsing a
+	// large config takes long enough to look like a stalled tap otherwise.
+	setState(StateStarting)
+
 	cfg, err := parseConfigFile(opts.ConfigPath)
 	if err != nil {
+		setState(StateStopped)
 		return err
 	}
 
@@ -207,6 +212,7 @@ func Start(optionsJSON string) error {
 		addr, secret, aErr := allocController()
 		if aErr != nil {
 			mu.Unlock()
+			setState(StateStopped)
 			return aErr
 		}
 		controller = controllerInfo{Addr: addr, Secret: secret}
@@ -215,7 +221,6 @@ func Start(optionsJSON string) error {
 	current = opts
 	mu.Unlock()
 
-	setState(StateStarting)
 	applyOverrides(cfg, opts, info)
 	hub.ApplyConfig(cfg)
 	setState(StateRunning)

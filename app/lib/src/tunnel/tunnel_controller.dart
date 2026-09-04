@@ -15,6 +15,8 @@ class TunnelStatus {
   final String? error;
 }
 
+const _handoffTimeout = Duration(seconds: 8);
+
 /// Bridges profiles, settings and the core lifecycle.
 ///
 /// Connecting means: materialize `runtime.yaml` from the active profile plus the
@@ -33,13 +35,19 @@ class TunnelController extends StateNotifier<TunnelStatus> {
           .read(profileControllerProvider.notifier)
           .materializeActive(globalPatchYaml: settings.overrideYaml);
 
-      final accepted = await _ref
-          .read(coreServiceProvider)
-          .start(_request(configPath, settings));
+      final service = _ref.read(coreServiceProvider);
+      // Subscribed before the request so a core that reacts immediately cannot
+      // slip through before we start watching.
+      final handoff = _awaitState(service.states, (s) => s != CoreState.stopped);
 
-      state = TunnelStatus(
-        error: accepted ? null : 'VPN permission was declined',
-      );
+      final accepted = await service.start(_request(configPath, settings));
+      if (!accepted) {
+        state = const TunnelStatus(error: 'VPN permission was declined');
+        return;
+      }
+
+      await handoff;
+      state = const TunnelStatus();
     } catch (error) {
       state = TunnelStatus(error: _describe(error));
     }
@@ -49,7 +57,10 @@ class TunnelController extends StateNotifier<TunnelStatus> {
     if (state.busy) return;
     state = const TunnelStatus(busy: true);
     try {
-      await _ref.read(coreServiceProvider).stop();
+      final service = _ref.read(coreServiceProvider);
+      final handoff = _awaitState(service.states, (s) => s == CoreState.stopped);
+      await service.stop();
+      await handoff;
       state = const TunnelStatus();
     } catch (error) {
       state = TunnelStatus(error: _describe(error));
@@ -83,6 +94,19 @@ class TunnelController extends StateNotifier<TunnelStatus> {
   void clearError() {
     if (state.error != null) state = const TunnelStatus();
   }
+
+  /// Bridges the gap between the platform call returning and the core reporting
+  /// its new state, so the UI never falls back to "disconnected" mid-transition.
+  ///
+  /// The timeout covers the paths where the platform gives up before the core is
+  /// ever reached, for example when the TUN interface cannot be established.
+  Future<void> _awaitState(
+    Stream<CoreState> states,
+    bool Function(CoreState) matches,
+  ) => states
+      .firstWhere(matches)
+      .timeout(_handoffTimeout)
+      .then<void>((_) {}, onError: (_) {});
 
   StartRequest _request(String configPath, AppSettings settings) =>
       StartRequest(

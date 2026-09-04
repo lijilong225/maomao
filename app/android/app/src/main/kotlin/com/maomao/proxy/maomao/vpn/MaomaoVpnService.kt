@@ -5,10 +5,14 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.maomao.proxy.maomao.core.CoreBridge
 import java.util.Timer
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.timerTask
 
 /**
@@ -24,6 +28,10 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
     private var trafficTimer: Timer? = null
     private var profileName: String = "maomao"
 
+    /** Serialises tunnel transitions so a stop can never overtake a pending start. */
+    private val worker = Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
+
     @Volatile
     private var running = false
 
@@ -38,8 +46,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> {
-                stopTunnel()
-                stopSelf()
+                stopAndFinish()
                 return START_NOT_STICKY
             }
 
@@ -50,7 +57,10 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
                     stopSelf()
                     return START_NOT_STICKY
                 }
-                startTunnel(options)
+                // Must happen inside the startForegroundService grace period, so it
+                // cannot wait behind the config parse on the worker.
+                promoteToForeground()
+                worker.execute { startTunnel(options) }
                 return START_STICKY
             }
         }
@@ -59,15 +69,24 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
     }
 
     override fun onRevoke() {
-        stopTunnel()
-        stopSelf()
+        stopAndFinish()
     }
 
     override fun onDestroy() {
         CoreBridge.removeListener(this)
         CoreBridge.detachService(this)
-        stopTunnel()
+        val teardown = worker.submit { stopTunnel() }
+        worker.shutdown()
+        runCatching { teardown.get(TEARDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS) }
+            .onFailure { Log.w(TAG, "tunnel teardown did not finish in time", it) }
         super.onDestroy()
+    }
+
+    private fun stopAndFinish() {
+        worker.execute {
+            stopTunnel()
+            main.post { stopSelf() }
+        }
     }
 
     private fun startTunnel(options: VpnOptions) {
@@ -76,24 +95,23 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
             return
         }
 
-        try {
-            CoreBridge.validateConfig(options.configPath)
+        // Parsing here doubles as validation; the core rejects a bad config before
+        // anything is applied.
+        val tun = try {
+            CoreBridge.tunOptions(options.configPath)
         } catch (e: Exception) {
             broadcastError("invalid config: ${e.message}")
-            stopSelf()
+            main.post { stopSelf() }
             return
         }
 
-        val tun = CoreBridge.tunOptions(options.configPath)
         val pfd = establishTun(options, tun)
         if (pfd == null) {
             broadcastError("failed to establish VPN interface")
-            stopSelf()
+            main.post { stopSelf() }
             return
         }
         descriptor = pfd
-
-        promoteToForeground()
 
         // The core takes ownership of the descriptor via os.NewFile, so it must be
         // detached here; keeping the ParcelFileDescriptor would double-close the fd.
@@ -103,7 +121,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         } catch (e: Exception) {
             broadcastError("failed to start core: ${e.message}")
             closeDescriptor()
-            stopSelf()
+            main.post { stopSelf() }
             return
         }
 
@@ -113,7 +131,6 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
 
     private fun reload(options: VpnOptions) {
         try {
-            CoreBridge.validateConfig(options.configPath)
             CoreBridge.reload(options.configPath)
         } catch (e: Exception) {
             broadcastError("failed to reload config: ${e.message}")
@@ -274,6 +291,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
     companion object {
         private const val TAG = "MaomaoVpnService"
         private const val TRAFFIC_INTERVAL_MS = 1000L
+        private const val TEARDOWN_TIMEOUT_MS = 3000L
 
         const val ACTION_START = "com.maomao.proxy.action.START"
         const val ACTION_STOP = "com.maomao.proxy.action.STOP"
