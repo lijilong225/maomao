@@ -31,11 +31,11 @@ jobs:
 
       - name: go vet
         working-directory: core
-        run: go vet -tags "with_gvisor cmfa" ./...
+        run: go vet -tags "with_gvisor cmfa no_tailscale no_zerotier no_fake_tcp" ./...
 
       - name: go test
         working-directory: core
-        run: go test -tags "with_gvisor cmfa" ./...
+        run: go test -tags "with_gvisor cmfa no_tailscale no_zerotier no_fake_tcp" ./...
 
   app:
     name: app (flutter)

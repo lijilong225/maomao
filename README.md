@@ -70,7 +70,7 @@ flutter run            # 调试
 flutter build apk      # 发布
 ```
 
-AAR 输出到 `app/android/app/libs/maomao-core.aar`，默认按 `android/arm64,android/arm,android/amd64` 三个 ABI 编译，构建标签为 `with_gvisor cmfa`。
+AAR 输出到 `app/android/app/libs/maomao-core.aar`，默认按 `android/arm64,android/arm,android/amd64` 三个 ABI 编译，构建标签为 `with_gvisor cmfa no_tailscale no_zerotier no_fake_tcp`。后三个标签把 Tailscale / ZeroTier 出站与 hysteria v1 的 `faketcp` obfs 编译为 stub，每个 ABI 少约 12 MB；这些类型出现在配置里时内核会返回明确的「已禁用」错误而不是崩溃。要恢复完整协议支持，用 `make android BUILD_TAGS="with_gvisor cmfa"` 覆盖。
 
 可通过变量覆盖工具链路径：
 

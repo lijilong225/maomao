@@ -49,7 +49,8 @@ android {
 
     packaging {
         jniLibs {
-            useLegacyPackaging = false
+            // Compressing the 59 MB core library shrinks the APK by ~50 MB, paid for by install-time extraction.
+            useLegacyPackaging = true
         }
     }
 

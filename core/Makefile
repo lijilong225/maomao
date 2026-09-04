@@ -6,7 +6,8 @@ ANDROID_NDK_HOME ?= $(ANDROID_SDK)/ndk/$(NDK_VERSION)
 ANDROID_API ?= 24
 
 GOMOBILE ?= $(shell go env GOPATH)/bin/gomobile
-BUILD_TAGS ?= with_gvisor cmfa
+# The no_* tags stub out tailscale/zerotier outbounds and hysteria v1's faketcp obfs, saving ~12 MB per ABI.
+BUILD_TAGS ?= with_gvisor cmfa no_tailscale no_zerotier no_fake_tcp
 AAR_OUT ?= ../app/android/app/libs/maomao-core.aar
 
 # gomobile locates gobind through PATH.
