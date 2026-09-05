@@ -8,6 +8,7 @@ import (
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
+	"github.com/metacubex/mihomo/hub/route"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
@@ -74,7 +75,18 @@ func (e *mihomoEngine) reload(opts startOptions, info controllerInfo) error {
 	return e.start(opts, info)
 }
 
-func (e *mihomoEngine) shutdown() { executor.Shutdown() }
+// shutdown stops the tunnel and gives up the controller address.
+//
+// executor.Shutdown only closes the TUN listener: the RESTful controller lives in
+// hub/route's package globals and would keep its address bound for the rest of
+// the process, so the core taking over could not claim it. hub/route exports no
+// closer, but it does close the running server before honouring a new config, and
+// an empty address stops it from starting a replacement.
+func (e *mihomoEngine) shutdown() {
+	executor.Shutdown()
+	route.ReCreateServer(&route.Config{})
+	awaitControllerRelease()
+}
 
 func (e *mihomoEngine) traffic() (int64, int64) {
 	return statistic.DefaultManager.Now()

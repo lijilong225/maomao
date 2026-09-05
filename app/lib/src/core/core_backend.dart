@@ -49,6 +49,10 @@ abstract class CoreBackend {
 
   Future<String> version();
 
+  /// Version embedded for a specific engine, regardless of which one, if any,
+  /// currently owns the tunnel. Empty when the engine is unknown to the core.
+  Future<String> versionOf(CoreEngine engine);
+
   Future<CoreState> state();
 
   Future<ControllerInfo> controllerInfo();

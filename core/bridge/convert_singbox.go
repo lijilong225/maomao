@@ -183,7 +183,14 @@ func ConvertToSingbox(yamlText string) (string, error) {
 			// transport is useless on Android, where /etc/resolv.conf is absent.
 			Servers: []singboxDNSServer{
 				{Type: "udp", Tag: singboxDNSRemoteTag, Server: singboxDefaultRemoteDNS, Detour: singboxSelectTag},
-				{Type: "udp", Tag: singboxDNSDirectTag, Server: singboxDefaultDirectDNS, Detour: singboxDirectTag},
+				// Deliberately without a detour: sing-box rejects one that lands
+				// on a direct outbound carrying no dialer options ("detour to an
+				// empty direct outbound makes no sense"), and it only says so
+				// once the transport starts, which config validation never
+				// reaches. The query stays outside the tunnel regardless, since
+				// route.auto_detect_interface sends the socket through the
+				// platform's socket-protect hook.
+				{Type: "udp", Tag: singboxDNSDirectTag, Server: singboxDefaultDirectDNS},
 			},
 			Final:    singboxDNSRemoteTag,
 			Strategy: "prefer_ipv4",

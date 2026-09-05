@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Overrides the main source set so a debug install is distinguishable from a
+     release one sitting next to it on the same device. -->
+<resources>
+    <string name="app_name">maomao debug</string>
+    <string name="tile_label">maomao debug</string>
+</resources>

@@ -40,6 +40,9 @@ type singboxEngine struct {
 	// ctx carries the service registry of the live instance. Traffic counters are
 	// read back out of it, so it has to be kept alongside the instance.
 	ctx context.Context
+	// tunFd is the descriptor the host handed over, or 0. The core works on
+	// duplicates of it (see OpenInterface), so releasing it is up to the engine.
+	tunFd int
 
 	// Rate is derived by differentiating the cumulative counters: sing-box only
 	// exposes totals, unlike mihomo which tracks a rate itself.
@@ -110,13 +113,22 @@ func (e *singboxEngine) start(opts startOptions, info controllerInfo) error {
 
 	e.mu.Lock()
 	previous := e.instance
+	previousFd := e.tunFd
 	e.instance = instance
 	e.ctx = ctx
+	// Recorded only once the handover succeeded: on failure the host still owns the
+	// descriptor and closes it itself.
+	e.tunFd = opts.TunFd
 	e.resetRateLocked()
 	e.mu.Unlock()
 
 	if previous != nil {
 		_ = previous.Close()
+	}
+	// A reload keeps the same descriptor; a restart after the host re-established
+	// the interface brings a new one, and the one it replaces has to be let go.
+	if previousFd != opts.TunFd {
+		releaseTunFD(previousFd)
 	}
 	return nil
 }
@@ -134,14 +146,19 @@ func (e *singboxEngine) reload(opts startOptions, info controllerInfo) error {
 func (e *singboxEngine) shutdown() {
 	e.mu.Lock()
 	instance := e.instance
+	tunFd := e.tunFd
 	e.instance = nil
 	e.ctx = nil
+	e.tunFd = 0
 	e.resetRateLocked()
 	e.mu.Unlock()
 
 	if instance != nil {
 		_ = instance.Close()
 	}
+	// After the instance is gone, so is the last duplicate the core made of the
+	// host's descriptor; the original has to go too or the tunnel stays up.
+	releaseTunFD(tunFd)
 }
 
 func (e *singboxEngine) traffic() (int64, int64) {

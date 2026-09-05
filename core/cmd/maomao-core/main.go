@@ -111,6 +111,14 @@ func dispatch(req request) (any, *frameError) {
 	switch req.Method {
 	case "version":
 		return bridge.Version(), nil
+	case "versionOf":
+		var args struct {
+			Engine string `json:"engine"`
+		}
+		if failure := decodeArgs(req.Args, &args); failure != nil {
+			return nil, failure
+		}
+		return bridge.VersionOf(args.Engine), nil
 	case "state":
 		return bridge.State(), nil
 	case "controllerInfo":

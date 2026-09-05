@@ -24,9 +24,10 @@
   "sessionTotal": "Session total",
   "activeConnections": "Active connections",
   "coreLabel": "Core",
-  "coreVersion": "mihomo {version}",
+  "coreVersion": "{engine} {version}",
   "@coreVersion": {
     "placeholders": {
+      "engine": { "type": "String" },
       "version": { "type": "String" }
     }
   },
@@ -117,6 +118,7 @@
   "actionClose": "Close",
   "addSubscription": "Add subscription",
   "subscriptionUrl": "URL",
+  "subscriptionUrlRequired": "A subscription URL is required",
   "profileName": "Name",
   "profileNameOptional": "Optional; defaults to the subscription host",
   "editProfile": "Edit config",

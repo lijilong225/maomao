@@ -144,6 +144,14 @@ class ProfileController extends StateNotifier<ProfileState> {
     await _upsert(profile.copyWith(name: name));
   }
 
+  /// Points a remote profile at a new subscription. The stored body is left as
+  /// it is until the next update.
+  Future<void> setUrl(String id, String url) async {
+    final profile = _find(id);
+    if (profile == null || url.isEmpty) return;
+    await _upsert(profile.copyWith(url: url));
+  }
+
   Future<void> setAutoUpdate(String id, Duration? interval) async {
     final profile = _find(id);
     if (profile == null) return;

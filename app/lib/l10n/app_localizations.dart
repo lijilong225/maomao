@@ -221,8 +221,8 @@ abstract class AppLocalizations {
   /// No description provided for @coreVersion.
   ///
   /// In en, this message translates to:
-  /// **'mihomo {version}'**
-  String coreVersion(String version);
+  /// **'{engine} {version}'**
+  String coreVersion(String engine, String version);
 
   /// No description provided for @loading.
   ///
@@ -445,6 +445,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'URL'**
   String get subscriptionUrl;
+
+  /// No description provided for @subscriptionUrlRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'A subscription URL is required'**
+  String get subscriptionUrlRequired;
 
   /// No description provided for @profileName.
   ///

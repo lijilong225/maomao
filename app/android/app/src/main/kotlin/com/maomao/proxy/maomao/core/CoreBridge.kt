@@ -43,6 +43,9 @@ object CoreBridge : Delegate {
 
     val version: String get() = Bridge.version()
 
+    /** Version compiled in for [engine], whether or not it owns the tunnel. */
+    fun versionOf(engine: String): String = Bridge.versionOf(engine)
+
     /**
      * Prepares the core. The home directory holds its assets: geoip/geosite
      * databases, cache and fake-ip state.

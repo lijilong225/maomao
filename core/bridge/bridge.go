@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 // State values reported through Delegate.OnState.
@@ -310,7 +311,9 @@ func Reload(configPath string) error {
 	return nil
 }
 
-// Stop tears the tunnel down. The TUN descriptor is closed by the core.
+// Stop tears the tunnel down, releasing the TUN descriptor handed over by the
+// host: mihomo adopts it directly, while sing-box works on duplicates and leaves
+// the original to the engine's shutdown.
 func Stop() {
 	mu.Lock()
 	e := active
@@ -363,6 +366,39 @@ func allocController() (string, string, error) {
 		return "", "", err
 	}
 	return fmt.Sprintf("127.0.0.1:%d", port), hex.EncodeToString(raw), nil
+}
+
+// controllerReleaseTimeout bounds the wait for a closing controller listener.
+// Dropping a loopback listener is immediate, so a longer wait would only mean the
+// address is held by something the bridge does not own.
+const controllerReleaseTimeout = time.Second
+
+// awaitControllerRelease blocks until the controller address can be bound again.
+//
+// Cores tear their listener down from a goroutine, so a shutdown returning is not
+// enough for the next core to claim the address, and the address is fixed for the
+// life of the process. Best effort: if it stays taken there is nothing useful to
+// do here, and the core that fails to bind reports it itself.
+func awaitControllerRelease() {
+	mu.Lock()
+	addr := controller.Addr
+	mu.Unlock()
+	if addr == "" {
+		return
+	}
+
+	deadline := time.Now().Add(controllerReleaseTimeout)
+	for {
+		l, err := net.Listen("tcp", addr)
+		if err == nil {
+			_ = l.Close()
+			return
+		}
+		if !time.Now().Before(deadline) {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func setState(s string) {

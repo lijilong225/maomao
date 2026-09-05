@@ -25,23 +25,22 @@ class ControllerException implements Exception {
 /// frequency read-only data (proxies, connections, logs, traffic) is served here
 /// instead of crossing the platform channel.
 class ControllerClient {
-  ControllerClient(this._info, {Dio? dio})
-    : _dio =
-          dio ??
-          Dio(
-            BaseOptions(
-              baseUrl: 'http://${_info.addr}',
-              connectTimeout: const Duration(seconds: 3),
-              receiveTimeout: const Duration(seconds: 10),
-              headers: {'Authorization': 'Bearer ${_info.secret}'},
-              responseType: ResponseType.json,
-            ),
-          );
+  ControllerClient(this._info, {Dio? dio}) : _dio = dio ?? _openDio(_info);
 
   final ControllerInfo _info;
   final Dio _dio;
 
   static const defaultDelayTestUrl = 'https://www.gstatic.com/generate_204';
+
+  static Dio _openDio(ControllerInfo info) => Dio(
+    BaseOptions(
+      baseUrl: 'http://${info.addr}',
+      connectTimeout: const Duration(seconds: 3),
+      receiveTimeout: const Duration(seconds: 10),
+      headers: {'Authorization': 'Bearer ${info.secret}'},
+      responseType: ResponseType.json,
+    ),
+  )..transformer = _LenientJsonTransformer();
 
   void close() => _dio.close(force: true);
 
@@ -305,5 +304,44 @@ class ControllerClient {
       return body['message'] as String;
     }
     return e.message ?? e.type.name;
+  }
+}
+
+/// Decodes JSON bodies the controller forgot to label as JSON.
+///
+/// sing-box's clash API writes `/proxies` and `/proxies/{name}` straight to the
+/// socket instead of going through its JSON renderer, so those two responses
+/// carry no `Content-Type` and Go's sniffer labels them `text/plain`. dio's
+/// transformers gate JSON decoding on that header, so the body would come back
+/// as a `String` and the cast to the requested `Map` would blow up as an opaque
+/// `DioExceptionType.unknown`. mihomo labels every response, so this only ever
+/// kicks in on sing-box.
+///
+/// Only bodies that really are JSON are converted: anything else is handed back
+/// untouched, which keeps genuine `text/plain` errors readable.
+class _LenientJsonTransformer extends Transformer {
+  final Transformer _inner = FusedTransformer();
+
+  @override
+  Future<String> transformRequest(RequestOptions options) =>
+      _inner.transformRequest(options);
+
+  @override
+  Future<dynamic> transformResponse(
+    RequestOptions options,
+    ResponseBody responseBody,
+  ) async {
+    final data = await _inner.transformResponse(options, responseBody);
+    if (options.responseType != ResponseType.json || data is! String) {
+      return data;
+    }
+    if (data.isEmpty) {
+      return data;
+    }
+    try {
+      return jsonDecode(data);
+    } on FormatException {
+      return data;
+    }
   }
 }

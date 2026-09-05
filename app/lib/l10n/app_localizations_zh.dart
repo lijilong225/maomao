@@ -70,8 +70,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get coreLabel => '内核';
 
   @override
-  String coreVersion(String version) {
-    return 'mihomo $version';
+  String coreVersion(String engine, String version) {
+    return '$engine $version';
   }
 
   @override
@@ -202,6 +202,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get subscriptionUrl => '链接';
+
+  @override
+  String get subscriptionUrlRequired => '订阅链接不能为空';
 
   @override
   String get profileName => '名称';

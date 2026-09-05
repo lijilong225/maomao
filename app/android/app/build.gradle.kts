@@ -66,6 +66,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Distinct application ID so a debug build installs alongside a release one.
+            // namespace stays put, so the Kotlin package and R class are unaffected.
+            applicationIdSuffix = ".debug"
+        }
         release {
             // Falls back to debug keys so `flutter build --release` works without a keystore.
             signingConfig =

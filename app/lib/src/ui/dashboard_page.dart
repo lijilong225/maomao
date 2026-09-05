@@ -5,6 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../core/core_models.dart';
 import '../core/core_providers.dart';
 import '../profile/profile_providers.dart';
+import '../settings/settings_providers.dart';
 import '../tunnel/tunnel_controller.dart';
 import 'format.dart';
 
@@ -259,6 +260,7 @@ class _CoreInfoCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final engine = ref.watch(coreEngineProvider);
     final version = ref.watch(coreVersionProvider);
     return Card(
       child: ListTile(
@@ -266,7 +268,7 @@ class _CoreInfoCard extends ConsumerWidget {
         title: Text(l10n.coreLabel),
         subtitle: Text(
           version.when(
-            data: (value) => l10n.coreVersion(value),
+            data: (value) => l10n.coreVersion(engine.wireName, value),
             loading: () => l10n.loading,
             error: (error, _) => l10n.unavailable,
           ),

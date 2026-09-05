@@ -24,7 +24,7 @@
   "sessionTotal": "本次累计",
   "activeConnections": "活动连接",
   "coreLabel": "内核",
-  "coreVersion": "mihomo {version}",
+  "coreVersion": "{engine} {version}",
   "loading": "加载中…",
   "unavailable": "不可用",
 
@@ -65,6 +65,7 @@
   "actionClose": "关闭",
   "addSubscription": "添加订阅",
   "subscriptionUrl": "链接",
+  "subscriptionUrlRequired": "订阅链接不能为空",
   "profileName": "名称",
   "profileNameOptional": "可留空，默认使用订阅域名",
   "editProfile": "编辑配置",

@@ -40,6 +40,10 @@ class CoreProcessBackend extends CoreBackend {
   Future<String> version() async => await _invoke<String>('version') ?? '';
 
   @override
+  Future<String> versionOf(CoreEngine engine) async =>
+      await _invoke<String>('versionOf', {'engine': engine.wireName}) ?? '';
+
+  @override
   Future<CoreState> state() async =>
       CoreState.parse(await _invoke<String>('state') ?? '');
 

@@ -46,6 +46,8 @@ class CoreService {
 
   Future<String> version() => _channel.version();
 
+  Future<String> versionOf(CoreEngine engine) => _channel.versionOf(engine);
+
   /// Reads the current state from the platform so cold starts (for example after
   /// the tunnel was started from the quick settings tile) are reflected.
   Future<void> refresh() async => _onState(await _channel.state());

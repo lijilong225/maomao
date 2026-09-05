@@ -83,6 +83,13 @@ class MaomaoPlugin :
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "version" -> result.success(CoreBridge.version)
+            "versionOf" ->
+                result.success(
+                    CoreBridge.versionOf(
+                        call.argument<String>("engine") ?: VpnOptions.ENGINE_MIHOMO,
+                    ),
+                )
+
             "state" -> result.success(CoreBridge.lastState)
             "controllerInfo" -> {
                 val (addr, secret) = CoreBridge.controllerInfo()

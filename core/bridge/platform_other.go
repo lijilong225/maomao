@@ -9,3 +9,6 @@ import "context"
 func withSingboxPlatform(ctx context.Context, opts startOptions) context.Context {
 	return ctx
 }
+
+// releaseTunFD is a no-op off Android: no descriptor is handed over there.
+func releaseTunFD(fd int) {}

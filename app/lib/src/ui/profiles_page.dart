@@ -334,21 +334,37 @@ class _ProfileEditorPageState extends ConsumerState<_ProfileEditorPage> {
   late final TextEditingController _controller = TextEditingController(
     text: widget.initialBody,
   );
+  late final TextEditingController _url = TextEditingController(
+    text: widget.profile.url ?? '',
+  );
   bool _saving = false;
 
   @override
   void dispose() {
     _controller.dispose();
+    _url.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
+    final url = _url.text.trim();
+    if (widget.profile.isRemote && url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.subscriptionUrlRequired)),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
     String? failure;
     try {
-      await ref
-          .read(profileControllerProvider.notifier)
-          .writeBody(widget.profile.id, _controller.text);
+      final profiles = ref.read(profileControllerProvider.notifier);
+      // Body first: an invalid config must not leave the URL half-applied.
+      await profiles.writeBody(widget.profile.id, _controller.text);
+      if (widget.profile.isRemote) {
+        await profiles.setUrl(widget.profile.id, url);
+      }
       if (ref.read(profileControllerProvider).activeId == widget.profile.id) {
         final tunnel = ref.read(tunnelControllerProvider.notifier);
         await tunnel.applyConfigChanges();
@@ -390,18 +406,38 @@ class _ProfileEditorPageState extends ConsumerState<_ProfileEditorPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: TextField(
-          controller: _controller,
-          maxLines: null,
-          expands: true,
-          textAlignVertical: TextAlignVertical.top,
-          style: const TextStyle(fontFamily: 'monospace'),
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            alignLabelWithHint: true,
-            helperText: l10n.editProfileHelper,
-            helperMaxLines: 2,
-          ),
+        child: Column(
+          children: [
+            if (widget.profile.isRemote) ...[
+              TextField(
+                controller: _url,
+                enabled: !_saving,
+                keyboardType: TextInputType.url,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: l10n.subscriptionUrl,
+                  hintText: 'https://…',
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                maxLines: null,
+                expands: true,
+                textAlignVertical: TextAlignVertical.top,
+                style: const TextStyle(fontFamily: 'monospace'),
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                  helperText: l10n.editProfileHelper,
+                  helperMaxLines: 2,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -70,8 +70,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coreLabel => 'Core';
 
   @override
-  String coreVersion(String version) {
-    return 'mihomo $version';
+  String coreVersion(String engine, String version) {
+    return '$engine $version';
   }
 
   @override
@@ -206,6 +206,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subscriptionUrl => 'URL';
+
+  @override
+  String get subscriptionUrlRequired => 'A subscription URL is required';
 
   @override
   String get profileName => 'Name';

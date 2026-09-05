@@ -23,10 +23,16 @@ import kotlin.concurrent.timerTask
  */
 class MaomaoVpnService : VpnService(), CoreBridge.Listener {
 
-    private var descriptor: ParcelFileDescriptor? = null
     private var notification: VpnNotification? = null
     private var trafficTimer: Timer? = null
     private var profileName: String = "maomao"
+
+    /**
+     * Descriptor produced by [establishTun], held only until the core accepts it.
+     * -1 once the core owns it, or once it has been closed here.
+     */
+    @Volatile
+    private var tunFd = -1
 
     /** Serialises tunnel transitions so a stop can never overtake a pending start. */
     private val worker = Executors.newSingleThreadExecutor()
@@ -35,7 +41,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
     @Volatile
     private var running = false
 
-    /** Which core owns [descriptor]; a switch cannot be applied by reloading. */
+    /** Which core owns the tunnel; a switch cannot be applied by reloading. */
     @Volatile
     private var activeEngine = VpnOptions.ENGINE_MIHOMO
 
@@ -99,9 +105,9 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
                 reload(options)
                 return
             }
-            // The descriptor belongs to the running core and is closed with it, so
-            // the incoming core needs a freshly established interface. Foreground
-            // state is left alone: dropping it here would strand the service.
+            // The descriptor is tied to the running core and released with it, so the
+            // incoming core needs a freshly established interface. Foreground state is
+            // left alone: dropping it here would strand the service.
             stopCore()
         }
 
@@ -121,19 +127,22 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
             main.post { stopSelf() }
             return
         }
-        descriptor = pfd
 
-        // The core takes ownership of the descriptor via os.NewFile, so it must be
-        // detached here; keeping the ParcelFileDescriptor would double-close the fd.
+        // The core takes ownership of the descriptor, so the wrapper has to let go of
+        // it; keeping the ParcelFileDescriptor would double-close the fd. Ownership
+        // only transfers once start returns: a failed handover leaves the interface
+        // established, so the descriptor stays ours until then.
         val fd = pfd.detachFd()
+        tunFd = fd
         try {
             CoreBridge.start(options.engine, options.configPath, fd, options.tunStack, tun.mtu)
         } catch (e: Exception) {
             broadcastError("failed to start core: ${e.message}")
-            closeDescriptor()
+            closeTunFd()
             main.post { stopSelf() }
             return
         }
+        tunFd = -1
 
         running = true
         activeEngine = options.engine
@@ -275,12 +284,20 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
             running = false
             runCatching { CoreBridge.stop() }
         }
-        closeDescriptor()
+        closeTunFd()
     }
 
-    private fun closeDescriptor() {
-        runCatching { descriptor?.close() }
-        descriptor = null
+    /**
+     * Closes the descriptor when the handover to the core never completed. The
+     * system keeps the VPN up until every descriptor pointing at the interface is
+     * gone, so leaking one leaves the key icon in the status bar for good.
+     */
+    private fun closeTunFd() {
+        val fd = tunFd
+        tunFd = -1
+        if (fd < 0) return
+        runCatching { ParcelFileDescriptor.adoptFd(fd).close() }
+            .onFailure { Log.w(TAG, "releasing tun descriptor failed", it) }
     }
 
     private fun broadcastError(message: String) {

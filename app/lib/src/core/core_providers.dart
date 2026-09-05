@@ -40,8 +40,15 @@ final controllerClientProvider = StreamProvider<ControllerClient?>((ref) {
   return service.clients;
 });
 
+/// Version of the engine the app is configured to run.
+///
+/// Keyed on the setting rather than on the live tunnel: the core reports the
+/// default engine's version while stopped, so asking it for "the" version would
+/// keep naming mihomo after a switch. A running tunnel keeps its own engine until
+/// it is reconnected, which the settings page spells out.
 final coreVersionProvider = FutureProvider<String>(
-  (ref) => ref.watch(coreServiceProvider).version(),
+  (ref) =>
+      ref.watch(coreServiceProvider).versionOf(ref.watch(coreEngineProvider)),
 );
 
 final installedAppsProvider = FutureProvider<List<InstalledApp>>(

@@ -189,3 +189,40 @@ func TestConvertToSingboxRejectsConfigWithoutProxies(t *testing.T) {
 		t.Error("expected an error for an empty config")
 	}
 }
+
+// sing-box refuses a detour that lands on a direct outbound carrying no dialer
+// options, and it only says so once the DNS transport starts. validate stops at
+// box.New, so nothing else in this file would notice.
+func TestConvertToSingboxKeepsDNSOffOptionlessDirectDetour(t *testing.T) {
+	_, doc := singboxConfigOf(t, singboxTestConfig)
+
+	optionless := make(map[string]bool)
+	for tag, out := range outboundsByTag(t, doc) {
+		// Every dialer option is a top-level key, so a direct outbound with
+		// nothing besides its type and tag is the shape sing-box rejects.
+		if out["type"] == "direct" && len(out) == 2 {
+			optionless[tag] = true
+		}
+	}
+
+	dns, ok := doc["dns"].(map[string]any)
+	if !ok {
+		t.Fatalf("dns is not an object: %#v", doc["dns"])
+	}
+	servers, ok := dns["servers"].([]any)
+	if !ok {
+		t.Fatalf("dns.servers is not a list: %#v", dns["servers"])
+	}
+	for _, entry := range servers {
+		server, ok := entry.(map[string]any)
+		if !ok {
+			t.Fatalf("dns server is not an object: %#v", entry)
+		}
+		if detour, _ := server["detour"].(string); optionless[detour] {
+			t.Errorf(
+				"dns server %#v detours to %q, which has no dialer options",
+				server["tag"], detour,
+			)
+		}
+	}
+}

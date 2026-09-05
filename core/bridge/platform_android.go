@@ -25,13 +25,23 @@ import (
 // the descriptor produced by VpnService.establish() and to keep its own sockets
 // outside the tunnel.
 //
-// Without a descriptor there is nothing to adopt, so the core is left to open its
-// own interface, which is what config validation does.
+// The hooks are injected even without a descriptor: sing-box only skips the
+// netlink route monitor, which the Android sandbox forbids, when a platform
+// interface is present, so config validation would fail without one.
 func withSingboxPlatform(ctx context.Context, opts startOptions) context.Context {
-	if opts.TunFd <= 0 {
-		return ctx
-	}
 	return service.ContextWith[adapter.PlatformInterface](ctx, &androidPlatform{tunFd: opts.TunFd})
+}
+
+// releaseTunFD closes the descriptor handed over by the host.
+//
+// OpenInterface only ever gives sing-box duplicates of it, so nothing inside the
+// core will close this one, and the system keeps the tunnel up until every
+// descriptor pointing at the interface is gone.
+func releaseTunFD(fd int) {
+	if fd <= 0 {
+		return
+	}
+	_ = syscall.Close(fd)
 }
 
 // androidPlatform implements the handful of adapter.PlatformInterface methods
@@ -65,8 +75,9 @@ func (p *androidPlatform) AutoDetectInterfaceControl(fd int) error {
 }
 
 // The descriptor comes from VpnService, so the core must adopt it rather than
-// create an interface of its own.
-func (p *androidPlatform) UsePlatformInterface() bool { return true }
+// create an interface of its own. Without one there is nothing to adopt, which is
+// the case during config validation.
+func (p *androidPlatform) UsePlatformInterface() bool { return p.tunFd > 0 }
 
 func (p *androidPlatform) OpenInterface(options *tun.Options, platformOptions option.TunPlatformOptions) (tun.Tun, error) {
 	// The descriptor is duplicated because sing-box closes what it is handed, and
