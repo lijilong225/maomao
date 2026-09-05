@@ -272,6 +272,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coreEngineReconnect => 'Reconnect to switch the running core';
 
   @override
+  String get tlsFragment => 'TLS fragment';
+
+  @override
+  String get tlsFragmentSubtitle =>
+      'Split the TLS handshake across packets so the visited domain is harder to read';
+
+  @override
   String get tunStack => 'TUN stack';
 
   @override

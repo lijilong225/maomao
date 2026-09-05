@@ -17,6 +17,7 @@ import (
 	sblog "github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	sbjson "github.com/sagernet/sing/common/json"
+	"github.com/sagernet/sing/common/json/badoption"
 	"github.com/sagernet/sing/service"
 )
 
@@ -305,7 +306,40 @@ func applySingboxOverrides(opts *option.Options, start startOptions, info contro
 	// what desktop wants anyway.
 	opts.Route.AutoDetectInterface = true
 
+	if start.TLSFragment {
+		applySingboxFragment(opts)
+	}
+
 	applySingboxTunOverrides(opts, start)
+}
+
+// applySingboxFragment prepends a rule that enables TLS fragmentation for every
+// TCP connection, whichever outbound the config ends up routing it to.
+//
+// A route-options action is non-terminal, so evaluation continues into the
+// config's own rules and routing is left untouched. The fragmenting writer only
+// splits a first payload it recognises as a TLS ClientHello and passes anything
+// else through unchanged, so non-TLS traffic is unaffected.
+func applySingboxFragment(opts *option.Options) {
+	rule := option.Rule{
+		Type: sbconstant.RuleTypeDefault,
+		DefaultOptions: option.DefaultRule{
+			// A rule equal to its zero value is rejected as empty, and
+			// fragmentation is meaningless for anything but TCP anyway.
+			RawDefaultRule: option.RawDefaultRule{
+				Network: badoption.Listable[string]{"tcp"},
+			},
+			RuleAction: option.RuleAction{
+				Action: sbconstant.RuleActionTypeRouteOptions,
+				RouteOptionsOptions: option.RouteOptionsActionOptions{
+					// Mutually exclusive with TLSRecordFragment, so only one of
+					// them may ever be set here.
+					TLSFragment: true,
+				},
+			},
+		},
+	}
+	opts.Route.Rules = append([]option.Rule{rule}, opts.Route.Rules...)
 }
 
 // applySingboxTunOverrides makes the tun inbound match the interface the host is

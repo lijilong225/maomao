@@ -566,6 +566,18 @@ abstract class AppLocalizations {
   /// **'Reconnect to switch the running core'**
   String get coreEngineReconnect;
 
+  /// No description provided for @tlsFragment.
+  ///
+  /// In en, this message translates to:
+  /// **'TLS fragment'**
+  String get tlsFragment;
+
+  /// No description provided for @tlsFragmentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Split the TLS handshake across packets so the visited domain is harder to read'**
+  String get tlsFragmentSubtitle;
+
   /// No description provided for @tunStack.
   ///
   /// In en, this message translates to:

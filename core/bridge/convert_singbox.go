@@ -77,7 +77,9 @@ type singboxGroup struct {
 	name         string
 	tag          string
 	outboundType string
-	members      []string
+	// autoTag names the inner urltest of an automatic group, empty otherwise.
+	autoTag string
+	members []string
 }
 
 // ConvertToSingbox translates a mihomo/Clash YAML config into sing-box JSON.
@@ -149,7 +151,7 @@ func ConvertToSingbox(yamlText string) (string, error) {
 	groups, groupTags := planSingboxGroups(source.ProxyGroup, tags)
 	pruneSingboxGroups(groups, groupTags, isSelectable, tags)
 
-	all := make([]singbox.SingBoxOut, 0, len(outbounds)+len(groups)+4)
+	all := make([]singbox.SingBoxOut, 0, len(outbounds)+2*len(groups)+4)
 	all = append(all, singbox.SingBoxOut{
 		Type:      "selector",
 		Tag:       singboxSelectTag,
@@ -162,7 +164,18 @@ func ConvertToSingbox(yamlText string) (string, error) {
 			continue
 		}
 		if group.outboundType == "urltest" {
-			all = append(all, newSingboxURLTest(group.tag, group.members))
+			// An automatic group is published as a selector wrapping the
+			// urltest, because sing-box's controller type-asserts on selector
+			// and refuses to switch a urltest, while mihomo lets the user pin
+			// any automatic group to one member. Defaulting to the urltest
+			// keeps the group picking by latency until the user does so.
+			all = append(all, newSingboxURLTest(group.autoTag, group.members))
+			all = append(all, singbox.SingBoxOut{
+				Type:      "selector",
+				Tag:       group.tag,
+				Outbounds: append([]string{group.autoTag}, group.members...),
+				Default:   group.autoTag,
+			})
 			continue
 		}
 		all = append(all, singbox.SingBoxOut{
@@ -344,11 +357,16 @@ func planSingboxGroups(source []clash.ProxyGroup, tags *singboxTagAllocator) ([]
 			continue
 		}
 		tag := tags.claim(name, "group")
+		autoTag := ""
+		if outboundType == "urltest" {
+			autoTag = tags.claim(name+"-auto", "group-auto")
+		}
 		groupTags[name] = tag
 		groups = append(groups, &singboxGroup{
 			name:         name,
 			tag:          tag,
 			outboundType: outboundType,
+			autoTag:      autoTag,
 			members:      group.Proxies,
 		})
 	}

@@ -60,6 +60,9 @@ type startOptions struct {
 	TunMTU   uint32 `json:"tunMTU"`
 	// TunMode is TunModeFD (default) or TunModeAuto.
 	TunMode string `json:"tunMode"`
+	// TLSFragment splits the TLS ClientHello so a censor cannot read the SNI from
+	// a single packet. sing-box only; mihomo has no equivalent.
+	TLSFragment bool `json:"tlsFragment"`
 }
 
 type controllerInfo struct {

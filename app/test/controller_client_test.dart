@@ -103,4 +103,26 @@ void main() {
 
     await expectLater(client.proxies(), throwsA(isA<ControllerException>()));
   });
+
+  // sing-box answers 400 "Must be a Selector" for anything else, including the
+  // GLOBAL group it injects for clash dashboards.
+  test('only offers a switch a sing-box controller would accept', () async {
+    final client = await _serveProxies(ContentType.json);
+    final nodes = await client.proxies();
+
+    expect(
+      nodes['select']!.switchable(automaticGroupsSwitchable: false),
+      isTrue,
+    );
+    expect(
+      nodes['GLOBAL']!.switchable(automaticGroupsSwitchable: false),
+      isFalse,
+    );
+    expect(
+      nodes['GLOBAL']!.switchable(automaticGroupsSwitchable: true),
+      isTrue,
+    );
+    expect(CoreEngine.singbox.switchesAutomaticGroups, isFalse);
+    expect(CoreEngine.mihomo.switchesAutomaticGroups, isTrue);
+  });
 }

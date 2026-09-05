@@ -264,6 +264,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get coreEngineReconnect => '重新连接后切换到新内核';
 
   @override
+  String get tlsFragment => 'TLS 分片';
+
+  @override
+  String get tlsFragmentSubtitle => '把 TLS 握手拆分到多个数据包，让访问的域名更难被读取';
+
+  @override
   String get tunStack => 'TUN 栈';
 
   @override

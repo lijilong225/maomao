@@ -146,13 +146,48 @@ func TestConvertToSingboxSynthesizesProxyGroups(t *testing.T) {
 	if !ok {
 		t.Fatalf("url-test group was dropped, got tags %v", byTag)
 	}
-	if auto["type"] != "urltest" {
-		t.Errorf("Auto type = %#v, want urltest", auto["type"])
+	if auto["type"] != "selector" {
+		t.Errorf("Auto type = %#v, want selector", auto["type"])
 	}
 
 	// A group whose members do not exist would abort startup with "missing tags".
 	if _, ok := byTag["Empty"]; ok {
 		t.Error("group with no usable member was kept, expected it to be skipped")
+	}
+}
+
+func TestConvertToSingboxWrapsAutomaticGroupsInSelector(t *testing.T) {
+	// sing-box's clash controller type-asserts on *group.Selector before
+	// switching a member, so a bare urltest group answers "Must be a Selector"
+	// with 400. Publishing the urltest behind a selector keeps the group
+	// automatic by default while letting the user pin one member, matching
+	// mihomo's behaviour for url-test and fallback groups.
+	_, doc := singboxConfigOf(t, singboxTestConfig)
+	byTag := outboundsByTag(t, doc)
+
+	auto, ok := byTag["Auto"]
+	if !ok {
+		t.Fatalf("url-test group was dropped, got tags %v", byTag)
+	}
+	if auto["type"] != "selector" {
+		t.Fatalf("Auto type = %#v, want selector", auto["type"])
+	}
+	if auto["default"] != "Auto-auto" {
+		t.Errorf("Auto default = %#v, want the inner urltest", auto["default"])
+	}
+	if got := stringsOf(t, auto["outbounds"]); strings.Join(got, ",") != "Auto-auto,node-a" {
+		t.Errorf("Auto outbounds = %v, want the urltest then every member", got)
+	}
+
+	inner, ok := byTag["Auto-auto"]
+	if !ok {
+		t.Fatalf("inner urltest is missing, got tags %v", byTag)
+	}
+	if inner["type"] != "urltest" {
+		t.Errorf("Auto-auto type = %#v, want urltest", inner["type"])
+	}
+	if got := stringsOf(t, inner["outbounds"]); strings.Join(got, ",") != "node-a" {
+		t.Errorf("Auto-auto outbounds = %v, want the group members", got)
 	}
 }
 

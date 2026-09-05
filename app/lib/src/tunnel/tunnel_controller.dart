@@ -125,6 +125,7 @@ class TunnelController extends StateNotifier<TunnelStatus> {
         disallowedApps: settings.disallowedApps,
         ipv6: settings.ipv6,
         bypassPrivateRoutes: settings.bypassPrivateRoutes,
+        tlsFragment: settings.tlsFragment,
       );
 
   String _describe(Object error) => switch (error) {

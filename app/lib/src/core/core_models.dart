@@ -119,6 +119,11 @@ enum CoreEngine {
   /// Whether the engine exposes mihomo's provider and geo database endpoints.
   bool get supportsProviders => this == CoreEngine.mihomo;
 
+  /// Whether the controller can pin a member of an automatic group. sing-box
+  /// only switches selector groups, so the core publishes every automatic group
+  /// behind one and whatever still reports `URLTest` stays read-only.
+  bool get switchesAutomaticGroups => this == CoreEngine.mihomo;
+
   static CoreEngine parse(String? raw) => switch (raw) {
     'singbox' => CoreEngine.singbox,
     _ => CoreEngine.mihomo,
@@ -136,6 +141,7 @@ class StartRequest {
     this.disallowedApps = const [],
     this.ipv6 = false,
     this.bypassPrivateRoutes = true,
+    this.tlsFragment = false,
   });
 
   final String configPath;
@@ -147,6 +153,9 @@ class StartRequest {
   final bool ipv6;
   final bool bypassPrivateRoutes;
 
+  /// Fragments the TLS handshake. Ignored by the mihomo core.
+  final bool tlsFragment;
+
   Map<String, dynamic> toArguments() => {
     'engine': engine.wireName,
     'configPath': configPath,
@@ -156,6 +165,7 @@ class StartRequest {
     'disallowedApps': disallowedApps,
     'ipv6': ipv6,
     'bypassPrivateRoutes': bypassPrivateRoutes,
+    'tlsFragment': tlsFragment,
   };
 
   @override

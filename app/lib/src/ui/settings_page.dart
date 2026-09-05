@@ -74,6 +74,14 @@ class SettingsPage extends ConsumerWidget {
             ],
           ),
         ),
+        // Fragmentation is a sing-box capability; mihomo has no equivalent.
+        if (settings.engine == CoreEngine.singbox)
+          SwitchListTile(
+            title: Text(l10n.tlsFragment),
+            subtitle: Text(l10n.tlsFragmentSubtitle),
+            value: settings.tlsFragment,
+            onChanged: controller.setTlsFragment,
+          ),
         const Divider(),
         _SectionHeader(l10n.sectionTunnel),
         ListTile(

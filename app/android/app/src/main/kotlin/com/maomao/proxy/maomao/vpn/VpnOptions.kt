@@ -11,6 +11,8 @@ data class VpnOptions(
     val disallowedApps: List<String> = emptyList(),
     val ipv6: Boolean = false,
     val bypassPrivateRoutes: Boolean = true,
+    /** TLS ClientHello fragmentation. sing-box only; mihomo has no equivalent. */
+    val tlsFragment: Boolean = false,
 ) {
     companion object {
         const val ENGINE_MIHOMO = "mihomo"

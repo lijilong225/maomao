@@ -113,13 +113,21 @@ object CoreBridge : Delegate {
         )
     }
 
-    fun start(engine: String, configPath: String, tunFd: Int, tunStack: String, tunMtu: Int) {
+    fun start(
+        engine: String,
+        configPath: String,
+        tunFd: Int,
+        tunStack: String,
+        tunMtu: Int,
+        tlsFragment: Boolean,
+    ) {
         val options = JSONObject()
             .put("engine", engine)
             .put("configPath", configPath)
             .put("tunFd", tunFd)
             .put("tunStack", tunStack)
             .put("tunMTU", tunMtu)
+            .put("tlsFragment", tlsFragment)
         Bridge.start(options.toString())
     }
 

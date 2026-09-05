@@ -88,6 +88,8 @@
   "coreEngine": "代理内核",
   "coreEngineSubtitle": "配置始终保存为 mihomo 格式，切到 sing-box 时自动转换",
   "coreEngineReconnect": "重新连接后切换到新内核",
+  "tlsFragment": "TLS 分片",
+  "tlsFragmentSubtitle": "把 TLS 握手拆分到多个数据包，让访问的域名更难被读取",
   "tunStack": "TUN 栈",
   "ipv6": "IPv6",
   "ipv6Subtitle": "让 IPv6 流量经过隧道",

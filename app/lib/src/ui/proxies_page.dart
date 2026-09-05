@@ -5,6 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../api/controller_models.dart';
 import '../core/core_providers.dart';
 import '../profile/profile_providers.dart';
+import '../settings/settings_providers.dart';
 import 'format.dart';
 
 class ProxiesPage extends ConsumerWidget {
@@ -87,7 +88,16 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
 
   ProxyNode get group => widget.group;
 
-  bool get _canSelect => group.isSelectable;
+  bool get _canSelect {
+    // Offline the groups are read from the profile, which is always authored in
+    // the mihomo format, and the pick is only recorded for later.
+    if (!widget.live) return group.isSelectable;
+    return group.switchable(
+      automaticGroupsSwitchable: ref
+          .watch(coreEngineProvider)
+          .switchesAutomaticGroups,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +114,7 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ExpansionTile(
         title: Text(group.name),
-        subtitle: Text('${group.type} · ${current ?? '—'}'),
+        subtitle: Text(_summary(current, measured, l10n)),
         trailing: _testingGroup
             ? const SizedBox(
                 width: 24,
@@ -148,6 +158,36 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
     );
   }
 
+  /// Carries the selection's latency so the collapsed row already says how the
+  /// active node performs.
+  String _summary(
+    String? current,
+    Map<String, int> measured,
+    AppLocalizations l10n,
+  ) {
+    if (current == null) return '${group.type} · —';
+    final delay = _delayLabel(current, measured, l10n);
+    return '${group.type} · $current${delay == null ? '' : ' ($delay)'}';
+  }
+
+  /// Null while the member has no reading to show.
+  String? _delayLabel(
+    String member,
+    Map<String, int> measured,
+    AppLocalizations l10n,
+  ) {
+    if (widget.live) {
+      final delay = widget.nodes[member]?.latestDelay ?? 0;
+      return delay > 0 ? formatDelay(delay) : null;
+    }
+    if (!(widget.nodes[member]?.hasEndpoint ?? false)) return null;
+    final delay = measured[member];
+    if (delay == null) return null;
+    // Offline a measured 0 means the server refused, which is worth naming; the
+    // core instead records 0 for anything it has not tested yet.
+    return delay == 0 ? l10n.nodeUnreachable : formatDelay(delay);
+  }
+
   /// Nothing for a member the app cannot dial itself, such as DIRECT or a
   /// nested group; otherwise a readout that measures this member when tapped.
   Widget? _memberDelay(
@@ -155,22 +195,13 @@ class _GroupTileState extends ConsumerState<_GroupTile> {
     Map<String, int> measured,
     AppLocalizations l10n,
   ) {
-    final offlineOnly = !widget.live;
-    if (offlineOnly && !(widget.nodes[member]?.hasEndpoint ?? false)) {
+    if (!widget.live && !(widget.nodes[member]?.hasEndpoint ?? false)) {
       return null;
     }
-    final delay = offlineOnly
-        ? measured[member]
-        : widget.nodes[member]?.latestDelay ?? 0;
-    final testing = _testingNodes.contains(member);
     return _NodeDelay(
-      // Offline a measured 0 means the server refused, which is worth naming;
-      // the core instead records 0 for anything it has not tested yet.
-      label: offlineOnly && delay == 0
-          ? l10n.nodeUnreachable
-          : formatDelay(delay ?? 0),
+      label: _delayLabel(member, measured, l10n) ?? formatDelay(0),
       tooltip: widget.live ? l10n.testLatency : l10n.testReachability,
-      testing: testing,
+      testing: _testingNodes.contains(member),
       onTest: () => _testNode(member),
     );
   }

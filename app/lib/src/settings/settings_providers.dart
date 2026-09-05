@@ -42,6 +42,9 @@ class SettingsController extends StateNotifier<AppSettings> {
   Future<void> setBypassPrivateRoutes(bool enabled) =>
       _persist(state.copyWith(bypassPrivateRoutes: enabled));
 
+  Future<void> setTlsFragment(bool enabled) =>
+      _persist(state.copyWith(tlsFragment: enabled));
+
   Future<void> setAllowedApps(List<String> packages) =>
       _persist(state.copyWith(allowedApps: packages));
 

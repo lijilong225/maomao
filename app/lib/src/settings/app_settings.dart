@@ -14,6 +14,7 @@ class AppSettings {
     this.tunStack = TunStack.gvisor,
     this.ipv6 = false,
     this.bypassPrivateRoutes = true,
+    this.tlsFragment = false,
     this.allowedApps = const [],
     this.disallowedApps = const [],
     this.overrideYaml = '',
@@ -26,6 +27,9 @@ class AppSettings {
   final TunStack tunStack;
   final bool ipv6;
   final bool bypassPrivateRoutes;
+
+  /// Fragments the TLS handshake. Only honoured by the sing-box core.
+  final bool tlsFragment;
 
   /// When non-empty, only these packages are tunnelled.
   final List<String> allowedApps;
@@ -45,6 +49,7 @@ class AppSettings {
     TunStack? tunStack,
     bool? ipv6,
     bool? bypassPrivateRoutes,
+    bool? tlsFragment,
     List<String>? allowedApps,
     List<String>? disallowedApps,
     String? overrideYaml,
@@ -57,6 +62,7 @@ class AppSettings {
     tunStack: tunStack ?? this.tunStack,
     ipv6: ipv6 ?? this.ipv6,
     bypassPrivateRoutes: bypassPrivateRoutes ?? this.bypassPrivateRoutes,
+    tlsFragment: tlsFragment ?? this.tlsFragment,
     allowedApps: allowedApps ?? this.allowedApps,
     disallowedApps: disallowedApps ?? this.disallowedApps,
     overrideYaml: overrideYaml ?? this.overrideYaml,
@@ -70,6 +76,7 @@ class AppSettings {
     'tunStack': tunStack.wireName,
     'ipv6': ipv6,
     'bypassPrivateRoutes': bypassPrivateRoutes,
+    'tlsFragment': tlsFragment,
     'allowedApps': allowedApps,
     'disallowedApps': disallowedApps,
     'overrideYaml': overrideYaml,
@@ -86,6 +93,7 @@ class AppSettings {
     ),
     ipv6: json['ipv6'] as bool? ?? false,
     bypassPrivateRoutes: json['bypassPrivateRoutes'] as bool? ?? true,
+    tlsFragment: json['tlsFragment'] as bool? ?? false,
     allowedApps: (json['allowedApps'] as List<dynamic>? ?? const [])
         .cast<String>(),
     disallowedApps: (json['disallowedApps'] as List<dynamic>? ?? const [])

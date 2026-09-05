@@ -55,6 +55,14 @@ class ProxyNode {
 
   bool get isSelectable => selectableTypes.contains(type);
 
+  /// Whether the running core accepts a switch for this group.
+  ///
+  /// Pass false for [automaticGroupsSwitchable] on a core whose controller only
+  /// switches selectors, such as sing-box: it answers 400 "Must be a Selector"
+  /// for an automatic group and for the synthetic GLOBAL it injects.
+  bool switchable({required bool automaticGroupsSwitchable}) =>
+      isSelectable && (automaticGroupsSwitchable || type == 'Selector');
+
   int get latestDelay => history.isEmpty ? 0 : history.last.delay;
 
   static ProxyNode fromJson(String name, Map<String, dynamic> json) =>

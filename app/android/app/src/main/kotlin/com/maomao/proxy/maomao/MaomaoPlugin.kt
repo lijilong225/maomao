@@ -195,6 +195,7 @@ class MaomaoPlugin :
             disallowedApps = call.argument<List<String>>("disallowedApps") ?: emptyList(),
             ipv6 = call.argument<Boolean>("ipv6") ?: false,
             bypassPrivateRoutes = call.argument<Boolean>("bypassPrivateRoutes") ?: true,
+            tlsFragment = call.argument<Boolean>("tlsFragment") ?: false,
         )
         VpnLauncher.start(context, options, call.argument<String>("profileName") ?: "maomao")
         result.success(null)

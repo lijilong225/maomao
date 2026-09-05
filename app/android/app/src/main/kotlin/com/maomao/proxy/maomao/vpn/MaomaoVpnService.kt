@@ -135,7 +135,14 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         val fd = pfd.detachFd()
         tunFd = fd
         try {
-            CoreBridge.start(options.engine, options.configPath, fd, options.tunStack, tun.mtu)
+            CoreBridge.start(
+                options.engine,
+                options.configPath,
+                fd,
+                options.tunStack,
+                tun.mtu,
+                options.tlsFragment,
+            )
         } catch (e: Exception) {
             broadcastError("failed to start core: ${e.message}")
             closeTunFd()
@@ -319,6 +326,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
             disallowedApps = getStringArrayListExtra(EXTRA_DISALLOWED_APPS) ?: emptyList(),
             ipv6 = getBooleanExtra(EXTRA_IPV6, false),
             bypassPrivateRoutes = getBooleanExtra(EXTRA_BYPASS_PRIVATE, true),
+            tlsFragment = getBooleanExtra(EXTRA_TLS_FRAGMENT, false),
         ).also { profileName = getStringExtra(EXTRA_PROFILE_NAME) ?: "maomao" }
     }
 
@@ -338,6 +346,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         const val EXTRA_DISALLOWED_APPS = "disallowedApps"
         const val EXTRA_IPV6 = "ipv6"
         const val EXTRA_BYPASS_PRIVATE = "bypassPrivateRoutes"
+        const val EXTRA_TLS_FRAGMENT = "tlsFragment"
 
         private const val DEFAULT_IPV4 = "198.18.0.1/30"
         private const val DEFAULT_IPV4_PREFIX = 30
