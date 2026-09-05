@@ -94,6 +94,13 @@ class ProfileRepository {
     return await file.exists() ? file.readAsString() : null;
   }
 
+  /// Nodes extracted for the xray kernel, or null when the body predates
+  /// extraction or the core rejected it.
+  Future<String?> readNodes(String profileId) async {
+    final file = await _nodesFile(profileId);
+    return await file.exists() ? file.readAsString() : null;
+  }
+
   /// Replaces the stored body with user-edited YAML once the core accepts it.
   /// A later remote update overwrites these edits.
   Future<void> writeBody(String profileId, String content) async {
@@ -118,9 +125,25 @@ class ProfileRepository {
   Future<void> _writeBody(String profileId, String content) async {
     final file = await _bodyFile(profileId);
     await file.writeAsString(content, flush: true);
+    await _writeNodes(profileId, content);
+  }
+
+  /// Caches the xray view of the subscription next to the body. Extraction is
+  /// best-effort: a body the xray mapper chokes on must not block the mihomo
+  /// kernel, so the stale cache is dropped and the error swallowed.
+  Future<void> _writeNodes(String profileId, String content) async {
+    final file = await _nodesFile(profileId);
+    try {
+      final nodes = await channel.extractNodes(content);
+      await file.writeAsString(nodes, flush: true);
+    } on CoreException {
+      if (await file.exists()) await file.delete();
+    }
   }
 
   Future<File> _bodyFile(String id) async => _profileFile(id, 'source.yaml');
+
+  Future<File> _nodesFile(String id) async => _profileFile(id, 'nodes.json');
 
   Future<File> _runtimeFile(String id) async =>
       _profileFile(id, 'runtime.yaml');

@@ -61,6 +61,10 @@ class CoreChannel extends CoreBackend {
       '';
 
   @override
+  Future<String> extractNodes(String config) async =>
+      await _invoke<String>('extractNodes', {'config': config}) ?? '';
+
+  @override
   Future<void> start(StartRequest request) =>
       _invoke<void>('start', request.toArguments());
 

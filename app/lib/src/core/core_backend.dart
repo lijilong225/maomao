@@ -66,6 +66,10 @@ abstract class CoreBackend {
   /// Deep-merges a declarative YAML patch onto a base config.
   Future<String> mergeConfig(String base, String patch);
 
+  /// Maps the proxies of a mihomo config to xray outbounds, as a JSON document.
+  /// Proxies xray cannot run are reported with a reason instead of being dropped.
+  Future<String> extractNodes(String config);
+
   Future<void> start(StartRequest request);
 
   Future<void> stop();

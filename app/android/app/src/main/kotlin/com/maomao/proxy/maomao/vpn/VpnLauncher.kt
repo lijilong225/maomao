@@ -13,6 +13,7 @@ object VpnLauncher {
     private const val PREFS = "maomao_vpn"
     private const val KEY_CONFIG_PATH = "configPath"
     private const val KEY_PROFILE_NAME = "profileName"
+    private const val KEY_KERNEL = "kernel"
     private const val KEY_TUN_STACK = "tunStack"
     private const val KEY_ALLOWED = "allowedApps"
     private const val KEY_DISALLOWED = "disallowedApps"
@@ -26,6 +27,7 @@ object VpnLauncher {
             action = MaomaoVpnService.ACTION_START
             putExtra(MaomaoVpnService.EXTRA_CONFIG_PATH, options.configPath)
             putExtra(MaomaoVpnService.EXTRA_PROFILE_NAME, profileName)
+            putExtra(MaomaoVpnService.EXTRA_KERNEL, options.kernel)
             putExtra(MaomaoVpnService.EXTRA_TUN_STACK, options.tunStack)
             putStringArrayListExtra(
                 MaomaoVpnService.EXTRA_ALLOWED_APPS,
@@ -53,6 +55,7 @@ object VpnLauncher {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit {
             putString(KEY_CONFIG_PATH, options.configPath)
             putString(KEY_PROFILE_NAME, profileName)
+            putString(KEY_KERNEL, options.kernel)
             putString(KEY_TUN_STACK, options.tunStack)
             putString(KEY_ALLOWED, options.allowedApps.joinToString(SEPARATOR))
             putString(KEY_DISALLOWED, options.disallowedApps.joinToString(SEPARATOR))
@@ -66,6 +69,7 @@ object VpnLauncher {
         val configPath = prefs.getString(KEY_CONFIG_PATH, null) ?: return null
         return VpnOptions(
             configPath = configPath,
+            kernel = prefs.getString(KEY_KERNEL, null) ?: VpnOptions.KERNEL_MIHOMO,
             tunStack = prefs.getString(KEY_TUN_STACK, null) ?: VpnOptions.STACK_GVISOR,
             allowedApps = prefs.getString(KEY_ALLOWED, "").orEmpty().splitList(),
             disallowedApps = prefs.getString(KEY_DISALLOWED, "").orEmpty().splitList(),

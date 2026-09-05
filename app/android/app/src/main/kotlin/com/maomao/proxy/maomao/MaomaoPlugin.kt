@@ -118,6 +118,11 @@ class MaomaoPlugin :
                 offload(result, "invalid_config") { CoreBridge.mergeConfig(base, patch) }
             }
 
+            "extractNodes" -> {
+                val config = call.argument<String>("config") ?: ""
+                offload(result, "invalid_config") { CoreBridge.extractNodes(config) }
+            }
+
             "start" -> start(call, result)
 
             "stop" -> {
@@ -172,6 +177,7 @@ class MaomaoPlugin :
 
         val options = VpnOptions(
             configPath = configPath,
+            kernel = call.argument<String>("kernel") ?: VpnOptions.KERNEL_MIHOMO,
             tunStack = call.argument<String>("tunStack") ?: VpnOptions.STACK_GVISOR,
             allowedApps = call.argument<List<String>>("allowedApps") ?: emptyList(),
             disallowedApps = call.argument<List<String>>("disallowedApps") ?: emptyList(),

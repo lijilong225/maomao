@@ -105,11 +105,25 @@ enum TunStack {
   String get wireName => name;
 }
 
+/// Proxy engines embedded in the core. Only one can run at a time.
+enum ProxyKernel {
+  mihomo,
+  xray;
+
+  String get wireName => name;
+
+  static ProxyKernel parse(String raw) => switch (raw) {
+    'xray' => ProxyKernel.xray,
+    _ => ProxyKernel.mihomo,
+  };
+}
+
 /// Options handed to the platform when starting the tunnel.
 class StartRequest {
   const StartRequest({
     required this.configPath,
     this.profileName = 'maomao',
+    this.kernel = ProxyKernel.mihomo,
     this.tunStack = TunStack.gvisor,
     this.allowedApps = const [],
     this.disallowedApps = const [],
@@ -119,6 +133,7 @@ class StartRequest {
 
   final String configPath;
   final String profileName;
+  final ProxyKernel kernel;
   final TunStack tunStack;
   final List<String> allowedApps;
   final List<String> disallowedApps;
@@ -128,6 +143,7 @@ class StartRequest {
   Map<String, dynamic> toArguments() => {
     'configPath': configPath,
     'profileName': profileName,
+    'kernel': kernel.wireName,
     'tunStack': tunStack.wireName,
     'allowedApps': allowedApps,
     'disallowedApps': disallowedApps,

@@ -95,9 +95,10 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
             return
         }
 
-        // Parsing here doubles as validation; the core rejects a bad config before
-        // anything is applied.
+        // Selects the engine before anything reads the config: tunOptions and the
+        // parse below both answer for whichever kernel is active.
         val tun = try {
+            CoreBridge.selectKernel(options.kernel)
             CoreBridge.tunOptions(options.configPath)
         } catch (e: Exception) {
             broadcastError("invalid config: ${e.message}")
@@ -117,7 +118,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         // detached here; keeping the ParcelFileDescriptor would double-close the fd.
         val fd = pfd.detachFd()
         try {
-            CoreBridge.start(options.configPath, fd, options.tunStack, tun.mtu)
+            CoreBridge.start(options.configPath, options.kernel, fd, options.tunStack, tun.mtu)
         } catch (e: Exception) {
             broadcastError("failed to start core: ${e.message}")
             closeDescriptor()
@@ -280,6 +281,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         val configPath = getStringExtra(EXTRA_CONFIG_PATH) ?: return null
         return VpnOptions(
             configPath = configPath,
+            kernel = getStringExtra(EXTRA_KERNEL) ?: VpnOptions.KERNEL_MIHOMO,
             tunStack = getStringExtra(EXTRA_TUN_STACK) ?: VpnOptions.STACK_GVISOR,
             allowedApps = getStringArrayListExtra(EXTRA_ALLOWED_APPS) ?: emptyList(),
             disallowedApps = getStringArrayListExtra(EXTRA_DISALLOWED_APPS) ?: emptyList(),
@@ -298,6 +300,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
 
         const val EXTRA_CONFIG_PATH = "configPath"
         const val EXTRA_PROFILE_NAME = "profileName"
+        const val EXTRA_KERNEL = "kernel"
         const val EXTRA_TUN_STACK = "tunStack"
         const val EXTRA_ALLOWED_APPS = "allowedApps"
         const val EXTRA_DISALLOWED_APPS = "disallowedApps"

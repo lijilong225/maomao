@@ -111,6 +111,19 @@ func dispatch(req request) (any, *frameError) {
 	switch req.Method {
 	case "version":
 		return bridge.Version(), nil
+	case "kernel":
+		return bridge.Kernel(), nil
+	case "selectKernel":
+		var args struct {
+			Kernel string `json:"kernel"`
+		}
+		if failure := decodeArgs(req.Args, &args); failure != nil {
+			return nil, failure
+		}
+		if err := bridge.SelectKernel(args.Kernel); err != nil {
+			return nil, &frameError{Code: "invalid_argument", Message: err.Error()}
+		}
+		return true, nil
 	case "state":
 		return bridge.State(), nil
 	case "controllerInfo":
@@ -158,6 +171,18 @@ func dispatch(req request) (any, *frameError) {
 			return nil, &frameError{Code: "invalid_config", Message: err.Error()}
 		}
 		return merged, nil
+	case "extractNodes":
+		var args struct {
+			Config string `json:"config"`
+		}
+		if failure := decodeArgs(req.Args, &args); failure != nil {
+			return nil, failure
+		}
+		nodes, err := bridge.ExtractNodes(args.Config)
+		if err != nil {
+			return nil, &frameError{Code: "invalid_config", Message: err.Error()}
+		}
+		return nodes, nil
 	case "start":
 		return start(req.Args)
 	case "stop":
@@ -173,6 +198,7 @@ func dispatch(req request) (any, *frameError) {
 func start(raw json.RawMessage) (any, *frameError) {
 	var args struct {
 		ConfigPath string `json:"configPath"`
+		Kernel     string `json:"kernel"`
 		TunStack   string `json:"tunStack"`
 		TunMTU     uint32 `json:"tunMTU"`
 	}
@@ -196,6 +222,7 @@ func start(raw json.RawMessage) (any, *frameError) {
 	}
 	options, err := json.Marshal(map[string]any{
 		"configPath": args.ConfigPath,
+		"kernel":     args.Kernel,
 		"tunStack":   stack,
 		"tunMTU":     args.TunMTU,
 		"tunMode":    bridge.TunModeAuto,

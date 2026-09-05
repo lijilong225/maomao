@@ -43,6 +43,15 @@ object CoreBridge : Delegate {
 
     val version: String get() = Bridge.version()
 
+    /** Identifier of the engine the core currently answers for. */
+    val kernel: String get() = Bridge.kernel()
+
+    /**
+     * Switches the engine. Every other call reflects the selection, so this has to
+     * run before the config is inspected. Throws while a tunnel is up.
+     */
+    fun selectKernel(name: String) = Bridge.selectKernel(name)
+
     /**
      * Prepares the core. The home directory holds its assets: geoip/geosite
      * databases, cache and fake-ip state.
@@ -92,6 +101,9 @@ object CoreBridge : Delegate {
     fun mergeConfig(baseYaml: String, patchYaml: String): String =
         Bridge.mergeConfig(baseYaml, patchYaml)
 
+    /** Maps the proxies of a mihomo config to xray outbounds, as a JSON document. */
+    fun extractNodes(configYaml: String): String = Bridge.extractNodes(configYaml)
+
     /**
      * TUN parameters derived from the config. The core narrows fake-ip-range to a
      * /30 and ignores host overrides, so the VpnService builder must mirror these.
@@ -106,9 +118,10 @@ object CoreBridge : Delegate {
         )
     }
 
-    fun start(configPath: String, tunFd: Int, tunStack: String, tunMtu: Int) {
+    fun start(configPath: String, kernel: String, tunFd: Int, tunStack: String, tunMtu: Int) {
         val options = JSONObject()
             .put("configPath", configPath)
+            .put("kernel", kernel)
             .put("tunFd", tunFd)
             .put("tunStack", tunStack)
             .put("tunMTU", tunMtu)
