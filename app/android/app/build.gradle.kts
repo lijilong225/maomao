@@ -66,6 +66,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // A distinct id lets a debug build sit next to the release install; the
+            // "-test" name and label (see src/debug/res) tell them apart on device.
+            applicationIdSuffix = ".test"
+            versionNameSuffix = "-test"
+        }
         release {
             // Falls back to debug keys so `flutter build --release` works without a keystore.
             signingConfig =
