@@ -118,7 +118,14 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         // detached here; keeping the ParcelFileDescriptor would double-close the fd.
         val fd = pfd.detachFd()
         try {
-            CoreBridge.start(options.configPath, options.kernel, fd, options.tunStack, tun.mtu)
+            CoreBridge.start(
+                options.configPath,
+                options.kernel,
+                fd,
+                options.tunStack,
+                tun.mtu,
+                options.xrayFragment,
+            )
         } catch (e: Exception) {
             broadcastError("failed to start core: ${e.message}")
             closeDescriptor()
@@ -287,6 +294,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
             disallowedApps = getStringArrayListExtra(EXTRA_DISALLOWED_APPS) ?: emptyList(),
             ipv6 = getBooleanExtra(EXTRA_IPV6, false),
             bypassPrivateRoutes = getBooleanExtra(EXTRA_BYPASS_PRIVATE, true),
+            xrayFragment = getBooleanExtra(EXTRA_XRAY_FRAGMENT, false),
         ).also { profileName = getStringExtra(EXTRA_PROFILE_NAME) ?: "maomao" }
     }
 
@@ -306,6 +314,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         const val EXTRA_DISALLOWED_APPS = "disallowedApps"
         const val EXTRA_IPV6 = "ipv6"
         const val EXTRA_BYPASS_PRIVATE = "bypassPrivateRoutes"
+        const val EXTRA_XRAY_FRAGMENT = "xrayFragment"
 
         private const val DEFAULT_IPV4 = "198.18.0.1/30"
         private const val DEFAULT_IPV4_PREFIX = 30

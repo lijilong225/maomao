@@ -129,6 +129,7 @@ class StartRequest {
     this.disallowedApps = const [],
     this.ipv6 = false,
     this.bypassPrivateRoutes = true,
+    this.xrayFragment = false,
   });
 
   final String configPath;
@@ -139,6 +140,7 @@ class StartRequest {
   final List<String> disallowedApps;
   final bool ipv6;
   final bool bypassPrivateRoutes;
+  final bool xrayFragment;
 
   Map<String, dynamic> toArguments() => {
     'configPath': configPath,
@@ -149,6 +151,7 @@ class StartRequest {
     'disallowedApps': disallowedApps,
     'ipv6': ipv6,
     'bypassPrivateRoutes': bypassPrivateRoutes,
+    'xrayFragment': xrayFragment,
   };
 
   @override

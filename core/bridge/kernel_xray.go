@@ -225,6 +225,17 @@ func (k *xrayKernel) buildConfig(opts startOptions) ([]byte, error) {
 		return nil, err
 	}
 
+	// Fragmenting is currently only reachable on the direct outbound, because the
+	// skeleton has no node outbounds yet.
+	direct := xrayOutbound{Tag: xrayDirectTag, Protocol: "freedom"}
+	if opts.XrayFragment {
+		settings, err := json.Marshal(xrayFreedomSettings{Fragment: defaultXrayFragment()})
+		if err != nil {
+			return nil, err
+		}
+		direct.Settings = settings
+	}
+
 	return json.Marshal(xrayDocument{
 		Log: xrayLogSettings{Access: "none", Error: "none", LogLevel: "warning"},
 		Policy: xrayPolicySettings{System: xraySystemPolicy{
@@ -238,7 +249,7 @@ func (k *xrayKernel) buildConfig(opts startOptions) ([]byte, error) {
 			Sniffing: &xraySniffing{Enabled: true, DestOverride: []string{"http", "tls"}},
 		}},
 		Outbounds: []xrayOutbound{
-			{Tag: xrayDirectTag, Protocol: "freedom"},
+			direct,
 			{Tag: xrayBlockTag, Protocol: "blackhole"},
 		},
 	})
@@ -351,4 +362,20 @@ type xrayOutbound struct {
 type xrayTunSettings struct {
 	Name string `json:"name"`
 	MTU  uint32 `json:"MTU"`
+}
+
+type xrayFreedomSettings struct {
+	Fragment *xrayFragmentSettings `json:"fragment,omitempty"`
+}
+
+// Length and Interval must be present and LengthMin must be non-zero, xray
+// rejects the config otherwise.
+type xrayFragmentSettings struct {
+	Packets  string `json:"packets"`
+	Length   string `json:"length"`
+	Interval string `json:"interval"`
+}
+
+func defaultXrayFragment() *xrayFragmentSettings {
+	return &xrayFragmentSettings{Packets: "tlshello", Length: "100-200", Interval: "10-20"}
 }

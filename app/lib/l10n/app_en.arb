@@ -24,9 +24,10 @@
   "sessionTotal": "Session total",
   "activeConnections": "Active connections",
   "coreLabel": "Core",
-  "coreVersion": "mihomo {version}",
+  "coreVersion": "{kernel} {version}",
   "@coreVersion": {
     "placeholders": {
+      "kernel": { "type": "String" },
       "version": { "type": "String" }
     }
   },
@@ -155,6 +156,12 @@
   "sectionProfiles": "Profiles",
   "sectionDiagnostics": "Diagnostics",
   "sectionAppearance": "Appearance",
+  "sectionKernel": "Kernel",
+  "kernelSwitchTitle": "Switch kernel",
+  "kernelSwitchBody": "Switching the kernel disconnects the tunnel first. Continue?",
+  "sectionXray": "Xray only",
+  "xrayFragment": "TLS fragmentation",
+  "xrayFragmentSubtitle": "Splits the TLS handshake into smaller packets to slip past some interference",
 
   "tunStack": "TUN stack",
   "ipv6": "IPv6",

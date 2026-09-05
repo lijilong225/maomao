@@ -11,6 +11,8 @@ data class VpnOptions(
     val disallowedApps: List<String> = emptyList(),
     val ipv6: Boolean = false,
     val bypassPrivateRoutes: Boolean = true,
+    /** Splits the TLS handshake into smaller packets. Ignored by mihomo. */
+    val xrayFragment: Boolean = false,
 ) {
     companion object {
         const val KERNEL_MIHOMO = "mihomo"

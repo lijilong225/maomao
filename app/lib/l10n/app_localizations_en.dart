@@ -70,8 +70,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coreLabel => 'Core';
 
   @override
-  String coreVersion(String version) {
-    return 'mihomo $version';
+  String coreVersion(String kernel, String version) {
+    return '$kernel $version';
   }
 
   @override
@@ -294,6 +294,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sectionAppearance => 'Appearance';
+
+  @override
+  String get sectionKernel => 'Kernel';
+
+  @override
+  String get kernelSwitchTitle => 'Switch kernel';
+
+  @override
+  String get kernelSwitchBody =>
+      'Switching the kernel disconnects the tunnel first. Continue?';
+
+  @override
+  String get sectionXray => 'Xray only';
+
+  @override
+  String get xrayFragment => 'TLS fragmentation';
+
+  @override
+  String get xrayFragmentSubtitle =>
+      'Splits the TLS handshake into smaller packets to slip past some interference';
 
   @override
   String get tunStack => 'TUN stack';

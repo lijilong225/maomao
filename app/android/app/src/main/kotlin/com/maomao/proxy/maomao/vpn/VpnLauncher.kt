@@ -19,6 +19,7 @@ object VpnLauncher {
     private const val KEY_DISALLOWED = "disallowedApps"
     private const val KEY_IPV6 = "ipv6"
     private const val KEY_BYPASS_PRIVATE = "bypassPrivateRoutes"
+    private const val KEY_XRAY_FRAGMENT = "xrayFragment"
     private const val SEPARATOR = "\n"
 
     fun start(context: Context, options: VpnOptions, profileName: String = "maomao") {
@@ -39,6 +40,7 @@ object VpnLauncher {
             )
             putExtra(MaomaoVpnService.EXTRA_IPV6, options.ipv6)
             putExtra(MaomaoVpnService.EXTRA_BYPASS_PRIVATE, options.bypassPrivateRoutes)
+            putExtra(MaomaoVpnService.EXTRA_XRAY_FRAGMENT, options.xrayFragment)
         }
         // A VpnService must be a foreground service, so it is always started this way.
         context.startForegroundService(intent)
@@ -61,6 +63,7 @@ object VpnLauncher {
             putString(KEY_DISALLOWED, options.disallowedApps.joinToString(SEPARATOR))
             putBoolean(KEY_IPV6, options.ipv6)
             putBoolean(KEY_BYPASS_PRIVATE, options.bypassPrivateRoutes)
+            putBoolean(KEY_XRAY_FRAGMENT, options.xrayFragment)
         }
     }
 
@@ -75,6 +78,7 @@ object VpnLauncher {
             disallowedApps = prefs.getString(KEY_DISALLOWED, "").orEmpty().splitList(),
             ipv6 = prefs.getBoolean(KEY_IPV6, false),
             bypassPrivateRoutes = prefs.getBoolean(KEY_BYPASS_PRIVATE, true),
+            xrayFragment = prefs.getBoolean(KEY_XRAY_FRAGMENT, false),
         )
     }
 

@@ -22,6 +22,8 @@ type startOptions struct {
 	TunMTU   uint32 `json:"tunMTU"`
 	// TunMode is TunModeFD (default) or TunModeAuto.
 	TunMode string `json:"tunMode"`
+	// XrayFragment splits outgoing TLS handshakes. mihomo ignores it.
+	XrayFragment bool `json:"xrayFragment"`
 }
 
 func (o startOptions) kernelName() string {

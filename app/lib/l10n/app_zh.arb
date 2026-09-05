@@ -24,7 +24,7 @@
   "sessionTotal": "本次累计",
   "activeConnections": "活动连接",
   "coreLabel": "内核",
-  "coreVersion": "mihomo {version}",
+  "coreVersion": "{kernel} {version}",
   "loading": "加载中…",
   "unavailable": "不可用",
 
@@ -93,6 +93,12 @@
   "sectionProfiles": "配置",
   "sectionDiagnostics": "诊断",
   "sectionAppearance": "外观",
+  "sectionKernel": "内核",
+  "kernelSwitchTitle": "切换内核",
+  "kernelSwitchBody": "切换内核需要先断开连接，是否继续？",
+  "sectionXray": "Xray 专用",
+  "xrayFragment": "TLS 分片",
+  "xrayFragmentSubtitle": "把 TLS 握手拆成小包，有助于绕过部分干扰",
 
   "tunStack": "TUN 栈",
   "ipv6": "IPv6",

@@ -58,6 +58,32 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         const Divider(),
+        _SectionHeader(l10n.sectionKernel),
+        ListTile(
+          title: Text(l10n.sectionKernel),
+          subtitle: Text(settings.kernel.wireName),
+          trailing: DropdownButton<ProxyKernel>(
+            value: settings.kernel,
+            onChanged: (kernel) => kernel == null || kernel == settings.kernel
+                ? null
+                : _switchKernel(context, ref, kernel, running: running),
+            items: [
+              for (final kernel in ProxyKernel.values)
+                DropdownMenuItem(value: kernel, child: Text(kernel.wireName)),
+            ],
+          ),
+        ),
+        if (settings.kernel == ProxyKernel.xray) ...[
+          const Divider(),
+          _SectionHeader(l10n.sectionXray),
+          SwitchListTile(
+            title: Text(l10n.xrayFragment),
+            subtitle: Text(l10n.xrayFragmentSubtitle),
+            value: settings.xrayFragment,
+            onChanged: controller.setXrayFragment,
+          ),
+        ],
+        const Divider(),
         _SectionHeader(l10n.sectionTunnel),
         ListTile(
           title: Text(l10n.tunStack),
@@ -162,6 +188,41 @@ class SettingsPage extends ConsumerWidget {
         const _UpdateTile(),
       ],
     );
+  }
+
+  /// The core refuses to swap engines in place, so a running tunnel is dropped
+  /// first, with the user's consent.
+  Future<void> _switchKernel(
+    BuildContext context,
+    WidgetRef ref,
+    ProxyKernel kernel, {
+    required bool running,
+  }) async {
+    if (running) {
+      final l10n = AppLocalizations.of(context);
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.kernelSwitchTitle),
+          content: Text(l10n.kernelSwitchBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.actionCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.kernelSwitchTitle),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      await ref.read(tunnelControllerProvider.notifier).disconnect();
+    }
+    await ref.read(settingsControllerProvider.notifier).setKernel(kernel);
+    // The version is cached per kernel, so it has to be re-read.
+    ref.invalidate(coreVersionProvider);
   }
 }
 

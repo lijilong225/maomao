@@ -40,6 +40,24 @@ func TestXrayBuildConfigPassesThroughJSON(t *testing.T) {
 	}
 }
 
+func TestXrayBuildConfigWithFragmentIsLoadable(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "source.yaml")
+	if err := os.WriteFile(path, []byte("proxies: []\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	raw, err := xrayCore.buildConfig(startOptions{ConfigPath: path, XrayFragment: true})
+	if err != nil {
+		t.Fatalf("buildConfig: %v", err)
+	}
+	if !bytes.Contains(raw, []byte(`"fragment"`)) {
+		t.Fatalf("fragment settings missing: %s", raw)
+	}
+	if _, err := xserial.LoadJSONConfig(bytes.NewReader(raw)); err != nil {
+		t.Fatalf("fragmented config rejected by xray: %v\n%s", err, raw)
+	}
+}
+
 func TestXrayValidateConfigRejectsMissingFile(t *testing.T) {
 	if err := xrayCore.validateConfig(filepath.Join(t.TempDir(), "absent.yaml")); err == nil {
 		t.Fatal("expected an error for a missing config file")

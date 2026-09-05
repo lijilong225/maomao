@@ -118,13 +118,21 @@ object CoreBridge : Delegate {
         )
     }
 
-    fun start(configPath: String, kernel: String, tunFd: Int, tunStack: String, tunMtu: Int) {
+    fun start(
+        configPath: String,
+        kernel: String,
+        tunFd: Int,
+        tunStack: String,
+        tunMtu: Int,
+        xrayFragment: Boolean = false,
+    ) {
         val options = JSONObject()
             .put("configPath", configPath)
             .put("kernel", kernel)
             .put("tunFd", tunFd)
             .put("tunStack", tunStack)
             .put("tunMTU", tunMtu)
+            .put("xrayFragment", xrayFragment)
         Bridge.start(options.toString())
     }
 

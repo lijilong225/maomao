@@ -10,6 +10,7 @@ const supportedLocales = [Locale('en'), Locale('zh')];
 /// [overrideYaml] is merged after the profile's own override, so it always wins.
 class AppSettings {
   const AppSettings({
+    this.kernel = ProxyKernel.mihomo,
     this.tunStack = TunStack.gvisor,
     this.ipv6 = false,
     this.bypassPrivateRoutes = true,
@@ -18,9 +19,11 @@ class AppSettings {
     this.overrideYaml = '',
     this.autoUpdateOnLaunch = true,
     this.logLevel = LogLevel.info,
+    this.xrayFragment = false,
     this.locale,
   });
 
+  final ProxyKernel kernel;
   final TunStack tunStack;
   final bool ipv6;
   final bool bypassPrivateRoutes;
@@ -35,10 +38,14 @@ class AppSettings {
   final bool autoUpdateOnLaunch;
   final LogLevel logLevel;
 
+  /// Splits the TLS handshake into smaller packets. Ignored by mihomo.
+  final bool xrayFragment;
+
   /// Null follows the system locale.
   final Locale? locale;
 
   AppSettings copyWith({
+    ProxyKernel? kernel,
     TunStack? tunStack,
     bool? ipv6,
     bool? bypassPrivateRoutes,
@@ -47,9 +54,11 @@ class AppSettings {
     String? overrideYaml,
     bool? autoUpdateOnLaunch,
     LogLevel? logLevel,
+    bool? xrayFragment,
     Locale? locale,
     bool clearLocale = false,
   }) => AppSettings(
+    kernel: kernel ?? this.kernel,
     tunStack: tunStack ?? this.tunStack,
     ipv6: ipv6 ?? this.ipv6,
     bypassPrivateRoutes: bypassPrivateRoutes ?? this.bypassPrivateRoutes,
@@ -58,10 +67,12 @@ class AppSettings {
     overrideYaml: overrideYaml ?? this.overrideYaml,
     autoUpdateOnLaunch: autoUpdateOnLaunch ?? this.autoUpdateOnLaunch,
     logLevel: logLevel ?? this.logLevel,
+    xrayFragment: xrayFragment ?? this.xrayFragment,
     locale: clearLocale ? null : locale ?? this.locale,
   );
 
   Map<String, dynamic> toJson() => {
+    'kernel': kernel.wireName,
     'tunStack': tunStack.wireName,
     'ipv6': ipv6,
     'bypassPrivateRoutes': bypassPrivateRoutes,
@@ -70,10 +81,12 @@ class AppSettings {
     'overrideYaml': overrideYaml,
     'autoUpdateOnLaunch': autoUpdateOnLaunch,
     'logLevel': logLevel.name,
+    'xrayFragment': xrayFragment,
     'locale': locale?.languageCode ?? '',
   };
 
   static AppSettings fromJson(Map<String, dynamic> json) => AppSettings(
+    kernel: ProxyKernel.parse(json['kernel'] as String? ?? 'mihomo'),
     tunStack: TunStack.values.firstWhere(
       (stack) => stack.wireName == json['tunStack'],
       orElse: () => TunStack.gvisor,
@@ -87,6 +100,7 @@ class AppSettings {
     overrideYaml: json['overrideYaml'] as String? ?? '',
     autoUpdateOnLaunch: json['autoUpdateOnLaunch'] as bool? ?? true,
     logLevel: LogLevel.parse(json['logLevel'] as String? ?? 'info'),
+    xrayFragment: json['xrayFragment'] as bool? ?? false,
     locale: _parseLocale(json['locale'] as String? ?? ''),
   );
 

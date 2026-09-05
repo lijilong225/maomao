@@ -221,8 +221,8 @@ abstract class AppLocalizations {
   /// No description provided for @coreVersion.
   ///
   /// In en, this message translates to:
-  /// **'mihomo {version}'**
-  String coreVersion(String version);
+  /// **'{kernel} {version}'**
+  String coreVersion(String kernel, String version);
 
   /// No description provided for @loading.
   ///
@@ -601,6 +601,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Appearance'**
   String get sectionAppearance;
+
+  /// No description provided for @sectionKernel.
+  ///
+  /// In en, this message translates to:
+  /// **'Kernel'**
+  String get sectionKernel;
+
+  /// No description provided for @kernelSwitchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch kernel'**
+  String get kernelSwitchTitle;
+
+  /// No description provided for @kernelSwitchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Switching the kernel disconnects the tunnel first. Continue?'**
+  String get kernelSwitchBody;
+
+  /// No description provided for @sectionXray.
+  ///
+  /// In en, this message translates to:
+  /// **'Xray only'**
+  String get sectionXray;
+
+  /// No description provided for @xrayFragment.
+  ///
+  /// In en, this message translates to:
+  /// **'TLS fragmentation'**
+  String get xrayFragment;
+
+  /// No description provided for @xrayFragmentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Splits the TLS handshake into smaller packets to slip past some interference'**
+  String get xrayFragmentSubtitle;
 
   /// No description provided for @tunStack.
   ///

@@ -70,8 +70,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get coreLabel => '内核';
 
   @override
-  String coreVersion(String version) {
-    return 'mihomo $version';
+  String coreVersion(String kernel, String version) {
+    return '$kernel $version';
   }
 
   @override
@@ -284,6 +284,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sectionAppearance => '外观';
+
+  @override
+  String get sectionKernel => '内核';
+
+  @override
+  String get kernelSwitchTitle => '切换内核';
+
+  @override
+  String get kernelSwitchBody => '切换内核需要先断开连接，是否继续？';
+
+  @override
+  String get sectionXray => 'Xray 专用';
+
+  @override
+  String get xrayFragment => 'TLS 分片';
+
+  @override
+  String get xrayFragmentSubtitle => '把 TLS 握手拆成小包，有助于绕过部分干扰';
 
   @override
   String get tunStack => 'TUN 栈';

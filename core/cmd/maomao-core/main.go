@@ -197,10 +197,11 @@ func dispatch(req request) (any, *frameError) {
 // new config to a running tunnel.
 func start(raw json.RawMessage) (any, *frameError) {
 	var args struct {
-		ConfigPath string `json:"configPath"`
-		Kernel     string `json:"kernel"`
-		TunStack   string `json:"tunStack"`
-		TunMTU     uint32 `json:"tunMTU"`
+		ConfigPath   string `json:"configPath"`
+		Kernel       string `json:"kernel"`
+		TunStack     string `json:"tunStack"`
+		TunMTU       uint32 `json:"tunMTU"`
+		XrayFragment bool   `json:"xrayFragment"`
 	}
 	if failure := decodeArgs(raw, &args); failure != nil {
 		return nil, failure
@@ -221,11 +222,12 @@ func start(raw json.RawMessage) (any, *frameError) {
 		stack = "gvisor"
 	}
 	options, err := json.Marshal(map[string]any{
-		"configPath": args.ConfigPath,
-		"kernel":     args.Kernel,
-		"tunStack":   stack,
-		"tunMTU":     args.TunMTU,
-		"tunMode":    bridge.TunModeAuto,
+		"configPath":   args.ConfigPath,
+		"kernel":       args.Kernel,
+		"tunStack":     stack,
+		"tunMTU":       args.TunMTU,
+		"tunMode":      bridge.TunModeAuto,
+		"xrayFragment": args.XrayFragment,
 	})
 	if err != nil {
 		return nil, &frameError{Code: "invalid_argument", Message: err.Error()}

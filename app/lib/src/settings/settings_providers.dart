@@ -31,6 +31,9 @@ class SettingsController extends StateNotifier<AppSettings> {
     await prefs.setString(_key, jsonEncode(next.toJson()));
   }
 
+  Future<void> setKernel(ProxyKernel kernel) =>
+      _persist(state.copyWith(kernel: kernel));
+
   Future<void> setTunStack(TunStack stack) =>
       _persist(state.copyWith(tunStack: stack));
 
@@ -53,6 +56,9 @@ class SettingsController extends StateNotifier<AppSettings> {
 
   Future<void> setLogLevel(LogLevel level) =>
       _persist(state.copyWith(logLevel: level));
+
+  Future<void> setXrayFragment(bool enabled) =>
+      _persist(state.copyWith(xrayFragment: enabled));
 
   /// Null follows the system locale.
   Future<void> setLocale(Locale? locale) =>

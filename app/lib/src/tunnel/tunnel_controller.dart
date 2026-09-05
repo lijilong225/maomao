@@ -113,11 +113,13 @@ class TunnelController extends StateNotifier<TunnelStatus> {
         configPath: configPath,
         profileName:
             _ref.read(profileControllerProvider).active?.name ?? 'maomao',
+        kernel: settings.kernel,
         tunStack: settings.tunStack,
         allowedApps: settings.allowedApps,
         disallowedApps: settings.disallowedApps,
         ipv6: settings.ipv6,
         bypassPrivateRoutes: settings.bypassPrivateRoutes,
+        xrayFragment: settings.xrayFragment,
       );
 
   String _describe(Object error) => switch (error) {
