@@ -234,6 +234,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logsEmpty => '暂无日志。';
 
   @override
+  String get sectionCore => '内核';
+
+  @override
   String get sectionTunnel => '隧道';
 
   @override
@@ -247,6 +250,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sectionAppearance => '外观';
+
+  @override
+  String get coreEngine => '代理内核';
+
+  @override
+  String get coreEngineSubtitle => '配置始终保存为 mihomo 格式，切到 sing-box 时自动转换';
+
+  @override
+  String get coreEngineReconnect => '重新连接后切换到新内核';
 
   @override
   String get tunStack => 'TUN 栈';

@@ -121,6 +121,7 @@ func dispatch(req request) (any, *frameError) {
 		return json.RawMessage(bridge.TrafficTotal()), nil
 	case "validateConfig":
 		var args struct {
+			Engine     string `json:"engine"`
 			ConfigPath string `json:"configPath"`
 		}
 		if failure := decodeArgs(req.Args, &args); failure != nil {
@@ -129,7 +130,7 @@ func dispatch(req request) (any, *frameError) {
 		if args.ConfigPath == "" {
 			return nil, &frameError{Code: "invalid_argument", Message: "configPath is required"}
 		}
-		if err := bridge.ValidateConfig(args.ConfigPath); err != nil {
+		if err := bridge.ValidateConfig(args.Engine, args.ConfigPath); err != nil {
 			return nil, &frameError{Code: "invalid_config", Message: err.Error()}
 		}
 		return true, nil
@@ -143,6 +144,18 @@ func dispatch(req request) (any, *frameError) {
 		converted, err := bridge.ConvertSubscription(args.Raw)
 		if err != nil {
 			return nil, &frameError{Code: "invalid_subscription", Message: err.Error()}
+		}
+		return converted, nil
+	case "convertToSingbox":
+		var args struct {
+			Yaml string `json:"yaml"`
+		}
+		if failure := decodeArgs(req.Args, &args); failure != nil {
+			return nil, failure
+		}
+		converted, err := bridge.ConvertToSingbox(args.Yaml)
+		if err != nil {
+			return nil, &frameError{Code: "invalid_config", Message: err.Error()}
 		}
 		return converted, nil
 	case "mergeConfig":
@@ -172,6 +185,7 @@ func dispatch(req request) (any, *frameError) {
 // new config to a running tunnel.
 func start(raw json.RawMessage) (any, *frameError) {
 	var args struct {
+		Engine     string `json:"engine"`
 		ConfigPath string `json:"configPath"`
 		TunStack   string `json:"tunStack"`
 		TunMTU     uint32 `json:"tunMTU"`
@@ -183,7 +197,10 @@ func start(raw json.RawMessage) (any, *frameError) {
 		return nil, &frameError{Code: "invalid_argument", Message: "configPath is required"}
 	}
 
-	if bridge.State() == bridge.StateRunning {
+	// A reload cannot move the tunnel across cores, so an engine switch has to go
+	// through the full start path instead.
+	sameEngine := bridge.ActiveEngine() == bridge.NormalizedEngine(args.Engine)
+	if bridge.State() == bridge.StateRunning && sameEngine {
 		if err := bridge.Reload(args.ConfigPath); err != nil {
 			return nil, &frameError{Code: "reload_failed", Message: err.Error()}
 		}
@@ -195,6 +212,7 @@ func start(raw json.RawMessage) (any, *frameError) {
 		stack = "gvisor"
 	}
 	options, err := json.Marshal(map[string]any{
+		"engine":     args.Engine,
 		"configPath": args.ConfigPath,
 		"tunStack":   stack,
 		"tunMTU":     args.TunMTU,

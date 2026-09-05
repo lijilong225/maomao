@@ -6,28 +6,40 @@ ANDROID_NDK_HOME ?= $(ANDROID_SDK)/ndk/$(NDK_VERSION)
 ANDROID_API ?= 24
 
 GOMOBILE ?= $(shell go env GOPATH)/bin/gomobile
+
+# sing-box gates most of its features behind build tags. with_clash_api is not
+# optional for us: without it include/ falls back to a stub that makes box.New
+# fail, which would leave the app without the RESTful controller it drives the UI
+# from. The rest cover what real-world subscriptions actually use.
+SINGBOX_TAGS ?= with_clash_api with_utls with_quic with_wireguard
+
 # The no_* tags stub out tailscale/zerotier outbounds and hysteria v1's faketcp obfs, saving ~12 MB per ABI.
-BUILD_TAGS ?= with_gvisor cmfa no_tailscale no_zerotier no_fake_tcp
+# with_gvisor is shared by both cores and means the same thing in each.
+MIHOMO_TAGS ?= cmfa no_tailscale no_zerotier no_fake_tcp
+BUILD_TAGS ?= with_gvisor $(SINGBOX_TAGS) $(MIHOMO_TAGS)
 AAR_OUT ?= ../app/android/app/libs/maomao-core.aar
 
 # gomobile locates gobind through PATH.
 export PATH := $(shell go env GOPATH)/bin:$(PATH)
 
-# constant.Version defaults to a stale placeholder, so inject the real one.
+# Both cores default constant.Version to a placeholder, so inject the real ones.
 MIHOMO_VERSION ?= $(shell go list -m -f '{{.Version}}' github.com/metacubex/mihomo)
-LDFLAGS ?= -s -w -X github.com/metacubex/mihomo/constant.Version=$(MIHOMO_VERSION)
+SINGBOX_VERSION ?= $(shell go list -m -f '{{.Version}}' github.com/sagernet/sing-box)
+LDFLAGS ?= -s -w \
+	-X github.com/metacubex/mihomo/constant.Version=$(MIHOMO_VERSION) \
+	-X github.com/sagernet/sing-box/constant.Version=$(SINGBOX_VERSION)
 
 # arm64 first: it is the only ABI required for Play Store 16KB page-size compliance.
 ANDROID_TARGETS ?= android/arm64,android/arm,android/amd64
 
 # Windows runs the core as a sidecar process, so the cmfa carve-outs (no
 # process-name matching, relaxed path checks) are not wanted there.
-WINDOWS_TAGS ?= with_gvisor
+WINDOWS_TAGS ?= with_gvisor $(SINGBOX_TAGS)
 WINDOWS_ARCH ?= amd64
 WINDOWS_OUT ?= ../app/windows/libs/maomao-core.exe
 
 # macOS ships as a sidecar too, and only Apple Silicon is supported.
-MACOS_TAGS ?= with_gvisor
+MACOS_TAGS ?= with_gvisor $(SINGBOX_TAGS)
 MACOS_ARCH ?= arm64
 MACOS_OUT ?= ../app/macos/libs/maomao-core
 

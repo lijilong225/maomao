@@ -57,7 +57,7 @@ abstract class CoreBackend {
   Future<bool> prepareVpn();
 
   /// Throws [CoreException] carrying the core's own parse error message.
-  Future<void> validateConfig(String configPath);
+  Future<void> validateConfig(CoreEngine engine, String configPath);
 
   /// Normalizes a raw subscription body (mihomo YAML or share links, optionally
   /// base64 encoded) into mihomo YAML using the core's own parsers.
@@ -65,6 +65,9 @@ abstract class CoreBackend {
 
   /// Deep-merges a declarative YAML patch onto a base config.
   Future<String> mergeConfig(String base, String patch);
+
+  /// Translates a mihomo YAML config into a sing-box JSON config.
+  Future<String> convertToSingbox(String yaml);
 
   Future<void> start(StartRequest request);
 

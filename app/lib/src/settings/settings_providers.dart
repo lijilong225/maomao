@@ -31,6 +31,9 @@ class SettingsController extends StateNotifier<AppSettings> {
     await prefs.setString(_key, jsonEncode(next.toJson()));
   }
 
+  Future<void> setEngine(CoreEngine engine) =>
+      _persist(state.copyWith(engine: engine));
+
   Future<void> setTunStack(TunStack stack) =>
       _persist(state.copyWith(tunStack: stack));
 
@@ -63,6 +66,12 @@ final settingsControllerProvider =
     StateNotifierProvider<SettingsController, AppSettings>(
       (ref) => SettingsController(),
     );
+
+/// Selected proxy core. Every engine-specific branch reads this.
+final coreEngineProvider = Provider<CoreEngine>(
+  (ref) =>
+      ref.watch(settingsControllerProvider.select((state) => state.engine)),
+);
 
 final releaseCheckerProvider = Provider<ReleaseChecker>((ref) {
   final checker = ReleaseChecker();

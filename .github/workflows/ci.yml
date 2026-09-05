@@ -31,11 +31,11 @@ jobs:
 
       - name: go vet
         working-directory: core
-        run: go vet -tags "with_gvisor cmfa no_tailscale no_zerotier no_fake_tcp" ./...
+        run: go vet -tags "with_gvisor with_clash_api with_utls with_quic with_wireguard cmfa no_tailscale no_zerotier no_fake_tcp" ./...
 
       - name: go test
         working-directory: core
-        run: go test -tags "with_gvisor cmfa no_tailscale no_zerotier no_fake_tcp" ./...
+        run: go test -tags "with_gvisor with_clash_api with_utls with_quic with_wireguard cmfa no_tailscale no_zerotier no_fake_tcp" ./...
 
   app:
     name: app (flutter)
@@ -130,9 +130,11 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path ../app/windows/libs | Out-Null
-          $version = go list -m -f '{{.Version}}' github.com/metacubex/mihomo
-          go build -tags "with_gvisor" -trimpath `
-            -ldflags "-s -w -X github.com/metacubex/mihomo/constant.Version=$version" `
+          $mihomo = go list -m -f '{{.Version}}' github.com/metacubex/mihomo
+          $singbox = go list -m -f '{{.Version}}' github.com/sagernet/sing-box
+          # Mirrors WINDOWS_TAGS in core/Makefile; without with_clash_api sing-box cannot start.
+          go build -tags "with_gvisor with_clash_api with_utls with_quic with_wireguard" -trimpath `
+            -ldflags "-s -w -X github.com/metacubex/mihomo/constant.Version=$mihomo -X github.com/sagernet/sing-box/constant.Version=$singbox" `
             -o ../app/windows/libs/maomao-core.exe ./cmd/maomao-core
 
       - name: Build Windows app

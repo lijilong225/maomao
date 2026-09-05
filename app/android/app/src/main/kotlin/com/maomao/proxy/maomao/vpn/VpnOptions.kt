@@ -3,6 +3,7 @@ package com.maomao.proxy.maomao.vpn
 /** Parameters handed to [MaomaoVpnService] when starting the tunnel. */
 data class VpnOptions(
     val configPath: String,
+    val engine: String = ENGINE_MIHOMO,
     val tunStack: String = STACK_GVISOR,
     /** Package names routed through the tunnel. Empty means "all apps". */
     val allowedApps: List<String> = emptyList(),
@@ -12,6 +13,9 @@ data class VpnOptions(
     val bypassPrivateRoutes: Boolean = true,
 ) {
     companion object {
+        const val ENGINE_MIHOMO = "mihomo"
+        const val ENGINE_SINGBOX = "singbox"
+
         const val STACK_GVISOR = "gvisor"
         const val STACK_SYSTEM = "system"
         const val STACK_MIXED = "mixed"

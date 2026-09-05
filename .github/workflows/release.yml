@@ -136,9 +136,11 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path ../app/windows/libs | Out-Null
-          $version = go list -m -f '{{.Version}}' github.com/metacubex/mihomo
-          go build -tags "with_gvisor" -trimpath `
-            -ldflags "-s -w -X github.com/metacubex/mihomo/constant.Version=$version" `
+          $mihomo = go list -m -f '{{.Version}}' github.com/metacubex/mihomo
+          $singbox = go list -m -f '{{.Version}}' github.com/sagernet/sing-box
+          # Mirrors WINDOWS_TAGS in core/Makefile; without with_clash_api sing-box cannot start.
+          go build -tags "with_gvisor with_clash_api with_utls with_quic with_wireguard" -trimpath `
+            -ldflags "-s -w -X github.com/metacubex/mihomo/constant.Version=$mihomo -X github.com/sagernet/sing-box/constant.Version=$singbox" `
             -o ../app/windows/libs/maomao-core.exe ./cmd/maomao-core
 
       - name: Build Windows app
@@ -216,5 +218,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          # Keeps suffixed tags such as v1.0.9-test out of the /releases/latest API.
+          prerelease: ${{ contains(github.event.inputs.tag || github.ref_name, '-') }}
           generate_release_notes: true
           files: artifacts/maomao-*

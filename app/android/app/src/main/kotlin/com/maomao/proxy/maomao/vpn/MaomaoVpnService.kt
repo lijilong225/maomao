@@ -35,6 +35,10 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
     @Volatile
     private var running = false
 
+    /** Which core owns [descriptor]; a switch cannot be applied by reloading. */
+    @Volatile
+    private var activeEngine = VpnOptions.ENGINE_MIHOMO
+
     override fun onCreate() {
         super.onCreate()
         notification = VpnNotification(this)
@@ -91,14 +95,20 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
 
     private fun startTunnel(options: VpnOptions) {
         if (running) {
-            reload(options)
-            return
+            if (options.engine == activeEngine) {
+                reload(options)
+                return
+            }
+            // The descriptor belongs to the running core and is closed with it, so
+            // the incoming core needs a freshly established interface. Foreground
+            // state is left alone: dropping it here would strand the service.
+            stopCore()
         }
 
         // Parsing here doubles as validation; the core rejects a bad config before
         // anything is applied.
         val tun = try {
-            CoreBridge.tunOptions(options.configPath)
+            CoreBridge.tunOptions(options.engine, options.configPath)
         } catch (e: Exception) {
             broadcastError("invalid config: ${e.message}")
             main.post { stopSelf() }
@@ -117,7 +127,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         // detached here; keeping the ParcelFileDescriptor would double-close the fd.
         val fd = pfd.detachFd()
         try {
-            CoreBridge.start(options.configPath, fd, options.tunStack, tun.mtu)
+            CoreBridge.start(options.engine, options.configPath, fd, options.tunStack, tun.mtu)
         } catch (e: Exception) {
             broadcastError("failed to start core: ${e.message}")
             closeDescriptor()
@@ -126,6 +136,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         }
 
         running = true
+        activeEngine = options.engine
         startTrafficUpdates()
     }
 
@@ -247,6 +258,17 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
     }
 
     private fun stopTunnel() {
+        stopCore()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(Service.STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
+    }
+
+    /** Stops the core and releases the descriptor, keeping the service foregrounded. */
+    private fun stopCore() {
         trafficTimer?.cancel()
         trafficTimer = null
         if (running) {
@@ -254,12 +276,6 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
             runCatching { CoreBridge.stop() }
         }
         closeDescriptor()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(Service.STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
     }
 
     private fun closeDescriptor() {
@@ -280,6 +296,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
         val configPath = getStringExtra(EXTRA_CONFIG_PATH) ?: return null
         return VpnOptions(
             configPath = configPath,
+            engine = getStringExtra(EXTRA_ENGINE) ?: VpnOptions.ENGINE_MIHOMO,
             tunStack = getStringExtra(EXTRA_TUN_STACK) ?: VpnOptions.STACK_GVISOR,
             allowedApps = getStringArrayListExtra(EXTRA_ALLOWED_APPS) ?: emptyList(),
             disallowedApps = getStringArrayListExtra(EXTRA_DISALLOWED_APPS) ?: emptyList(),
@@ -298,6 +315,7 @@ class MaomaoVpnService : VpnService(), CoreBridge.Listener {
 
         const val EXTRA_CONFIG_PATH = "configPath"
         const val EXTRA_PROFILE_NAME = "profileName"
+        const val EXTRA_ENGINE = "engine"
         const val EXTRA_TUN_STACK = "tunStack"
         const val EXTRA_ALLOWED_APPS = "allowedApps"
         const val EXTRA_DISALLOWED_APPS = "disallowedApps"

@@ -241,6 +241,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logsEmpty => 'No logs yet.';
 
   @override
+  String get sectionCore => 'Core';
+
+  @override
   String get sectionTunnel => 'Tunnel';
 
   @override
@@ -254,6 +257,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sectionAppearance => 'Appearance';
+
+  @override
+  String get coreEngine => 'Proxy core';
+
+  @override
+  String get coreEngineSubtitle =>
+      'Profiles stay in the mihomo format and are converted for sing-box automatically';
+
+  @override
+  String get coreEngineReconnect => 'Reconnect to switch the running core';
 
   @override
   String get tunStack => 'TUN stack';

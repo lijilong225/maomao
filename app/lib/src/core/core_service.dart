@@ -52,8 +52,8 @@ class CoreService {
 
   Future<List<InstalledApp>> installedApps() => _channel.installedApps();
 
-  Future<void> validateConfig(String configPath) =>
-      _channel.validateConfig(configPath);
+  Future<void> validateConfig(CoreEngine engine, String configPath) =>
+      _channel.validateConfig(engine, configPath);
 
   /// Returns false when the user declines the system VPN consent dialog.
   Future<bool> start(StartRequest request) async {

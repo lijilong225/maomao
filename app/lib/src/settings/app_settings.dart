@@ -10,6 +10,7 @@ const supportedLocales = [Locale('en'), Locale('zh')];
 /// [overrideYaml] is merged after the profile's own override, so it always wins.
 class AppSettings {
   const AppSettings({
+    this.engine = CoreEngine.mihomo,
     this.tunStack = TunStack.gvisor,
     this.ipv6 = false,
     this.bypassPrivateRoutes = true,
@@ -21,6 +22,7 @@ class AppSettings {
     this.locale,
   });
 
+  final CoreEngine engine;
   final TunStack tunStack;
   final bool ipv6;
   final bool bypassPrivateRoutes;
@@ -39,6 +41,7 @@ class AppSettings {
   final Locale? locale;
 
   AppSettings copyWith({
+    CoreEngine? engine,
     TunStack? tunStack,
     bool? ipv6,
     bool? bypassPrivateRoutes,
@@ -50,6 +53,7 @@ class AppSettings {
     Locale? locale,
     bool clearLocale = false,
   }) => AppSettings(
+    engine: engine ?? this.engine,
     tunStack: tunStack ?? this.tunStack,
     ipv6: ipv6 ?? this.ipv6,
     bypassPrivateRoutes: bypassPrivateRoutes ?? this.bypassPrivateRoutes,
@@ -62,6 +66,7 @@ class AppSettings {
   );
 
   Map<String, dynamic> toJson() => {
+    'engine': engine.wireName,
     'tunStack': tunStack.wireName,
     'ipv6': ipv6,
     'bypassPrivateRoutes': bypassPrivateRoutes,
@@ -74,6 +79,7 @@ class AppSettings {
   };
 
   static AppSettings fromJson(Map<String, dynamic> json) => AppSettings(
+    engine: CoreEngine.parse(json['engine'] as String?),
     tunStack: TunStack.values.firstWhere(
       (stack) => stack.wireName == json['tunStack'],
       orElse: () => TunStack.gvisor,

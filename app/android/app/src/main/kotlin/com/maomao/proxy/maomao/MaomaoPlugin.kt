@@ -97,8 +97,9 @@ class MaomaoPlugin :
                     result.error("invalid_argument", "configPath is required", null)
                     return
                 }
+                val engine = call.argument<String>("engine") ?: VpnOptions.ENGINE_MIHOMO
                 offload(result, "invalid_config") {
-                    CoreBridge.validateConfig(path)
+                    CoreBridge.validateConfig(engine, path)
                     true
                 }
             }
@@ -116,6 +117,15 @@ class MaomaoPlugin :
                 val base = call.argument<String>("base") ?: ""
                 val patch = call.argument<String>("patch") ?: ""
                 offload(result, "invalid_config") { CoreBridge.mergeConfig(base, patch) }
+            }
+
+            "convertToSingbox" -> {
+                val yaml = call.argument<String>("yaml")
+                if (yaml == null) {
+                    result.error("invalid_argument", "yaml is required", null)
+                    return
+                }
+                offload(result, "invalid_config") { CoreBridge.convertToSingbox(yaml) }
             }
 
             "start" -> start(call, result)
@@ -172,6 +182,7 @@ class MaomaoPlugin :
 
         val options = VpnOptions(
             configPath = configPath,
+            engine = call.argument<String>("engine") ?: VpnOptions.ENGINE_MIHOMO,
             tunStack = call.argument<String>("tunStack") ?: VpnOptions.STACK_GVISOR,
             allowedApps = call.argument<List<String>>("allowedApps") ?: emptyList(),
             disallowedApps = call.argument<List<String>>("disallowedApps") ?: emptyList(),

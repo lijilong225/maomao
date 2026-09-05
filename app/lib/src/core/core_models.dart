@@ -105,10 +105,31 @@ enum TunStack {
   String get wireName => name;
 }
 
+/// Proxy cores bundled with the app.
+///
+/// Profiles are always authored in the mihomo format; the sing-box engine runs
+/// on a config translated by the core, so switching engines does not require
+/// re-importing a subscription.
+enum CoreEngine {
+  mihomo,
+  singbox;
+
+  String get wireName => name;
+
+  /// Whether the engine exposes mihomo's provider and geo database endpoints.
+  bool get supportsProviders => this == CoreEngine.mihomo;
+
+  static CoreEngine parse(String? raw) => switch (raw) {
+    'singbox' => CoreEngine.singbox,
+    _ => CoreEngine.mihomo,
+  };
+}
+
 /// Options handed to the platform when starting the tunnel.
 class StartRequest {
   const StartRequest({
     required this.configPath,
+    this.engine = CoreEngine.mihomo,
     this.profileName = 'maomao',
     this.tunStack = TunStack.gvisor,
     this.allowedApps = const [],
@@ -118,6 +139,7 @@ class StartRequest {
   });
 
   final String configPath;
+  final CoreEngine engine;
   final String profileName;
   final TunStack tunStack;
   final List<String> allowedApps;
@@ -126,6 +148,7 @@ class StartRequest {
   final bool bypassPrivateRoutes;
 
   Map<String, dynamic> toArguments() => {
+    'engine': engine.wireName,
     'configPath': configPath,
     'profileName': profileName,
     'tunStack': tunStack.wireName,

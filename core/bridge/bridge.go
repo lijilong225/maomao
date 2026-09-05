@@ -1,5 +1,7 @@
-// Package bridge exposes a minimal, stable surface over the mihomo core so it can be
-// embedded into host applications (Android via gomobile, desktop via c-shared).
+// Package bridge exposes a minimal, stable surface over the proxy cores so they
+// can be embedded into host applications (Android via gomobile, desktop via a
+// sidecar process). Two cores live behind the same surface: mihomo, which
+// consumes Clash YAML, and sing-box, which consumes its own JSON.
 package bridge
 
 import (
@@ -12,13 +14,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-
-	"github.com/metacubex/mihomo/config"
-	C "github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/hub"
-	"github.com/metacubex/mihomo/hub/executor"
-	"github.com/metacubex/mihomo/log"
-	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
 // State values reported through Delegate.OnState.
@@ -28,7 +23,7 @@ const (
 	StateRunning  = "running"
 )
 
-// defaultTunMTU mirrors the fallback used by the core's sing-tun listener.
+// defaultTunMTU mirrors the fallback used by the cores' TUN listeners.
 const defaultTunMTU = 9000
 
 // TUN modes accepted by Start.
@@ -54,6 +49,8 @@ type Delegate interface {
 // startOptions is the JSON payload accepted by Start. Kept unexported because
 // gomobile cannot bind structs with unsigned integer fields.
 type startOptions struct {
+	// Engine selects the core: EngineMihomo (default) or EngineSingbox.
+	Engine     string `json:"engine"`
 	ConfigPath string `json:"configPath"`
 	// TunFd is the file descriptor produced by VpnService.establish(). 0 disables TUN.
 	TunFd int `json:"tunFd"`
@@ -69,6 +66,15 @@ type controllerInfo struct {
 	Secret string `json:"secret"`
 }
 
+// tunOptions describes the parameters the host must mirror when building the
+// platform TUN interface, so it matches what the core will bind to.
+type tunOptions struct {
+	IPv4 string `json:"ipv4"`
+	IPv6 string `json:"ipv6"`
+	MTU  uint32 `json:"mtu"`
+	DNS  string `json:"dns"`
+}
+
 var (
 	mu       sync.Mutex
 	delegate Delegate
@@ -76,19 +82,35 @@ var (
 
 	current    startOptions
 	controller controllerInfo
+	// active is the engine that owns the live tunnel, nil while stopped.
+	active engine
 
-	logOnce sync.Once
+	homeDir string
+
+	logOnce  sync.Once
+	logPumps []func()
 )
 
+// registerLogPump installs a goroutine body that forwards one core's log bus to
+// the delegate. Called from the per-engine init; started by RegisterDelegate.
+func registerLogPump(pump func()) {
+	logPumps = append(logPumps, pump)
+}
+
 // Init prepares the core working directories. Must be called once before Start.
-func Init(homeDir string) error {
-	if homeDir == "" {
+func Init(dir string) error {
+	if dir == "" {
 		return errors.New("homeDir is empty")
 	}
-	if err := os.MkdirAll(homeDir, 0o700); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
-	C.SetHomeDir(homeDir)
+
+	mu.Lock()
+	homeDir = dir
+	mu.Unlock()
+
+	setMihomoHomeDir(dir)
 	return nil
 }
 
@@ -99,11 +121,36 @@ func RegisterDelegate(d Delegate) {
 	mu.Unlock()
 
 	installSocketHook()
-	logOnce.Do(func() { go pumpLogs() })
+	logOnce.Do(func() {
+		for _, pump := range logPumps {
+			go pump()
+		}
+	})
 }
 
-// Version reports the embedded mihomo version.
-func Version() string { return C.Version }
+// Version reports the version of the engine that owns the tunnel, falling back
+// to the engine that would be selected by default.
+func Version() string {
+	mu.Lock()
+	e := active
+	name := current.Engine
+	mu.Unlock()
+
+	if e != nil {
+		return e.version()
+	}
+	return VersionOf(name)
+}
+
+// VersionOf reports the version embedded for a specific engine. An empty name
+// selects the default engine; an unknown name yields an empty string.
+func VersionOf(name string) string {
+	e, err := lookupEngine(name)
+	if err != nil {
+		return ""
+	}
+	return e.version()
+}
 
 // SetSystemDNS hands the platform resolvers to the core. On Android the core
 // cannot read /etc/resolv.conf, so without this every hostname the core resolves
@@ -134,6 +181,18 @@ func State() string {
 	return state
 }
 
+// ActiveEngine reports the engine that owns the live tunnel, or an empty string
+// while stopped. Hosts use it to decide between a reload and a full restart,
+// because a reload cannot move a tunnel from one core to the other.
+func ActiveEngine() string {
+	mu.Lock()
+	defer mu.Unlock()
+	if active == nil {
+		return ""
+	}
+	return active.name()
+}
+
 // ControllerInfo returns {"addr","secret"} for the loopback RESTful controller.
 func ControllerInfo() string {
 	mu.Lock()
@@ -142,47 +201,28 @@ func ControllerInfo() string {
 	return string(buf)
 }
 
-// ValidateConfig parses a config file without applying it.
-func ValidateConfig(configPath string) error {
-	_, err := parseConfigFile(configPath)
-	return err
-}
-
-// tunOptions describes the parameters the host must mirror when building the
-// platform TUN interface, so it matches what the core will bind to.
-type tunOptions struct {
-	IPv4 string `json:"ipv4"`
-	IPv6 string `json:"ipv6"`
-	MTU  uint32 `json:"mtu"`
-	DNS  string `json:"dns"`
+// ValidateConfig parses a config file with the given engine without applying it.
+// An empty engine name selects the default engine.
+func ValidateConfig(engineName string, configPath string) error {
+	e, err := lookupEngine(engineName)
+	if err != nil {
+		return err
+	}
+	return e.validate(configPath)
 }
 
 // TunOptions inspects a config file and reports the TUN parameters as JSON.
-// The core narrows fake-ip-range to a /30, so the host cannot pick these freely.
-func TunOptions(configPath string) (string, error) {
-	cfg, err := parseConfigFile(configPath)
+// The core narrows the interface address to a /30, so the host cannot pick these
+// freely and has to mirror whatever is reported here.
+func TunOptions(engineName string, configPath string) (string, error) {
+	e, err := lookupEngine(engineName)
 	if err != nil {
 		return "", err
 	}
-
-	opts := tunOptions{MTU: cfg.General.Tun.MTU}
-	if opts.MTU == 0 {
-		opts.MTU = defaultTunMTU
+	opts, err := e.tunOptions(configPath)
+	if err != nil {
+		return "", err
 	}
-	if len(cfg.General.Tun.Inet4Address) > 0 {
-		prefix := cfg.General.Tun.Inet4Address[0]
-		opts.IPv4 = prefix.String()
-		// The /30 leaves exactly two usable hosts: .1 for the gateway, .2 for DNS.
-		if next := prefix.Addr().Next(); next.IsValid() && prefix.Contains(next) {
-			opts.DNS = next.String()
-		} else {
-			opts.DNS = prefix.Addr().String()
-		}
-	}
-	if len(cfg.General.Tun.Inet6Address) > 0 {
-		opts.IPv6 = cfg.General.Tun.Inet6Address[0].String()
-	}
-
 	buf, err := json.Marshal(opts)
 	if err != nil {
 		return "", err
@@ -196,18 +236,19 @@ func Start(optionsJSON string) error {
 	if err := json.Unmarshal([]byte(optionsJSON), &opts); err != nil {
 		return fmt.Errorf("invalid options: %w", err)
 	}
+	opts.Engine = normalizeEngine(opts.Engine)
+
+	next, err := lookupEngine(opts.Engine)
+	if err != nil {
+		return err
+	}
 
 	// Announced before the parse so the UI can react on the first frame; parsing a
 	// large config takes long enough to look like a stalled tap otherwise.
 	setState(StateStarting)
 
-	cfg, err := parseConfigFile(opts.ConfigPath)
-	if err != nil {
-		setState(StateStopped)
-		return err
-	}
-
 	mu.Lock()
+	previous := active
 	if controller.Secret == "" {
 		addr, secret, aErr := allocController()
 		if aErr != nil {
@@ -218,11 +259,27 @@ func Start(optionsJSON string) error {
 		controller = controllerInfo{Addr: addr, Secret: secret}
 	}
 	info := controller
-	current = opts
 	mu.Unlock()
 
-	applyOverrides(cfg, opts, info)
-	hub.ApplyConfig(cfg)
+	// Two cores must never be live at once: they would fight over the same TUN
+	// descriptor and controller port.
+	if previous != nil && previous != next {
+		previous.shutdown()
+		mu.Lock()
+		active = nil
+		mu.Unlock()
+	}
+
+	if err := next.start(opts, info); err != nil {
+		setState(StateStopped)
+		return err
+	}
+
+	mu.Lock()
+	current = opts
+	active = next
+	mu.Unlock()
+
 	setState(StateRunning)
 	return nil
 }
@@ -232,23 +289,20 @@ func Reload(configPath string) error {
 	mu.Lock()
 	opts := current
 	info := controller
-	running := state == StateRunning
+	e := active
+	isRunning := state == StateRunning
 	mu.Unlock()
 
-	if !running {
-		return errors.New("core is not running")
+	if !isRunning || e == nil {
+		return errNotRunning
 	}
 	if configPath != "" {
 		opts.ConfigPath = configPath
 	}
 
-	cfg, err := parseConfigFile(opts.ConfigPath)
-	if err != nil {
+	if err := e.reload(opts, info); err != nil {
 		return err
 	}
-
-	applyOverrides(cfg, opts, info)
-	hub.ApplyConfig(cfg)
 
 	mu.Lock()
 	current = opts
@@ -259,83 +313,39 @@ func Reload(configPath string) error {
 // Stop tears the tunnel down. The TUN descriptor is closed by the core.
 func Stop() {
 	mu.Lock()
-	running := state != StateStopped
+	e := active
+	wasRunning := state != StateStopped
 	current = startOptions{}
+	active = nil
 	mu.Unlock()
 
-	if running {
-		executor.Shutdown()
+	if wasRunning && e != nil {
+		e.shutdown()
 	}
 	setState(StateStopped)
 }
 
 // Traffic returns {"up","down"} in bytes per second.
 func Traffic() string {
-	up, down := statistic.DefaultManager.Now()
-	buf, _ := json.Marshal(map[string]int64{"up": up, "down": down})
-	return string(buf)
+	return marshalTraffic(func(e engine) (int64, int64) { return e.traffic() })
 }
 
 // TrafficTotal returns cumulative {"up","down"} in bytes since start.
 func TrafficTotal() string {
-	up, down := statistic.DefaultManager.Total()
+	return marshalTraffic(func(e engine) (int64, int64) { return e.trafficTotal() })
+}
+
+func marshalTraffic(read func(engine) (int64, int64)) string {
+	mu.Lock()
+	e := active
+	mu.Unlock()
+
+	var up, down int64
+	if e != nil {
+		up, down = read(e)
+	}
 	buf, _ := json.Marshal(map[string]int64{"up": up, "down": down})
 	return string(buf)
-}
-
-func parseConfigFile(path string) (*config.Config, error) {
-	if path == "" {
-		return nil, errors.New("configPath is empty")
-	}
-	buf, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return executor.ParseWithBytes(buf)
-}
-
-// applyOverrides forces the settings the host owns, so a malicious or careless
-// subscription cannot change how traffic is captured on the device.
-func applyOverrides(cfg *config.Config, opts startOptions, info controllerInfo) {
-	cfg.Controller.ExternalController = info.Addr
-	cfg.Controller.ExternalControllerTLS = ""
-	cfg.Controller.ExternalControllerUnix = ""
-	cfg.Controller.ExternalControllerPipe = ""
-	cfg.Controller.ExternalUI = ""
-	cfg.Controller.ExternalUIURL = ""
-	cfg.Controller.ExternalDohServer = ""
-	cfg.Controller.Secret = info.Secret
-
-	// Routing on Android is owned by VpnService.Builder, and iptables needs root.
-	cfg.IPTables.Enable = false
-
-	switch {
-	case opts.TunMode == TunModeAuto:
-		cfg.General.Tun.Enable = true
-		cfg.General.Tun.FileDescriptor = 0
-		cfg.General.Tun.AutoRoute = true
-		cfg.General.Tun.AutoDetectInterface = true
-		cfg.General.Tun.AutoRedirect = false
-	case opts.TunFd > 0:
-		cfg.General.Tun.Enable = true
-		cfg.General.Tun.FileDescriptor = opts.TunFd
-		cfg.General.Tun.AutoRoute = false
-		cfg.General.Tun.AutoRedirect = false
-		cfg.General.Tun.AutoDetectInterface = false
-		cfg.General.Tun.StrictRoute = false
-	default:
-		return
-	}
-
-	if stack, ok := C.StackTypeMapping[opts.TunStack]; ok {
-		cfg.General.Tun.Stack = stack
-	}
-	if opts.TunMTU > 0 {
-		cfg.General.Tun.MTU = opts.TunMTU
-	}
-	if len(cfg.General.Tun.DNSHijack) == 0 {
-		cfg.General.Tun.DNSHijack = []string{"any:53"}
-	}
 }
 
 func allocController() (string, string, error) {
@@ -366,16 +376,23 @@ func setState(s string) {
 	}
 }
 
-func pumpLogs() {
-	sub := log.Subscribe()
-	defer log.UnSubscribe(sub)
-	for event := range sub {
-		mu.Lock()
-		d := delegate
-		mu.Unlock()
-		if d == nil {
-			continue
-		}
-		d.OnLog(event.LogLevel.String(), event.Payload)
+// emitLog forwards one core log line to the host, dropping it while no delegate
+// is attached.
+func emitLog(level string, payload string) {
+	mu.Lock()
+	d := delegate
+	mu.Unlock()
+
+	if d == nil {
+		return
 	}
+	d.OnLog(level, payload)
+}
+
+// currentHomeDir reports the working directory handed to Init. Engines that keep
+// their own state on disk derive their paths from it.
+func currentHomeDir() string {
+	mu.Lock()
+	defer mu.Unlock()
+	return homeDir
 }

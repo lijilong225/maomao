@@ -4,16 +4,20 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 import '../core/core_backend.dart';
+import '../core/core_models.dart';
 import 'profile_models.dart';
 import 'profile_store.dart';
 import 'subscription_fetcher.dart';
 
 /// Owns the profile lifecycle: fetch, convert, override, materialize, validate.
 ///
-/// Layering is `subscription body -> user override -> runtime.yaml`. The
+/// Layering is `subscription body -> user override -> runtime config`. The
 /// subscription body is kept verbatim so re-applying an override never requires
-/// a new download, and `runtime.yaml` is always validated by the core before it
-/// is handed to the tunnel.
+/// a new download, and the runtime config is always validated by the core before
+/// it is handed to the tunnel.
+///
+/// Profiles are stored as mihomo YAML whichever engine is selected; the sing-box
+/// engine consumes a translation produced at materialize time.
 class ProfileRepository {
   ProfileRepository({
     required this.channel,
@@ -67,9 +71,13 @@ class ProfileRepository {
     return profile.copyWith(updatedAt: DateTime.now());
   }
 
-  /// Merges the override onto the stored body, writes `runtime.yaml` and asks
-  /// the core to parse it. Returns the path to pass to `start`.
-  Future<String> materialize(Profile profile, {String? globalPatchYaml}) async {
+  /// Merges the override onto the stored body, writes the runtime config for
+  /// [engine] and asks the core to parse it. Returns the path to pass to `start`.
+  Future<String> materialize(
+    Profile profile, {
+    required CoreEngine engine,
+    String? globalPatchYaml,
+  }) async {
     final bodyFile = await _bodyFile(profile.id);
     if (!await bodyFile.exists()) {
       throw SubscriptionException('Profile has not been downloaded yet');
@@ -80,12 +88,15 @@ class ProfileRepository {
       if (patch.trim().isEmpty) continue;
       merged = await channel.mergeConfig(merged, patch);
     }
+    if (engine == CoreEngine.singbox) {
+      merged = await channel.convertToSingbox(merged);
+    }
 
-    final runtime = await _runtimeFile(profile.id);
+    final runtime = await _runtimeFile(profile.id, engine);
     await runtime.writeAsString(merged, flush: true);
 
     // Surfaces a parse error before the tunnel is brought up.
-    await channel.validateConfig(runtime.path);
+    await channel.validateConfig(engine, runtime.path);
     return runtime.path;
   }
 
@@ -100,7 +111,8 @@ class ProfileRepository {
     final draft = await _profileFile(profileId, 'draft.yaml');
     await draft.writeAsString(content, flush: true);
     try {
-      await channel.validateConfig(draft.path);
+      // The body is mihomo YAML regardless of the selected engine.
+      await channel.validateConfig(CoreEngine.mihomo, draft.path);
     } finally {
       if (await draft.exists()) await draft.delete();
     }
@@ -122,8 +134,10 @@ class ProfileRepository {
 
   Future<File> _bodyFile(String id) async => _profileFile(id, 'source.yaml');
 
-  Future<File> _runtimeFile(String id) async =>
-      _profileFile(id, 'runtime.yaml');
+  Future<File> _runtimeFile(String id, CoreEngine engine) async => _profileFile(
+    id,
+    engine == CoreEngine.singbox ? 'runtime.json' : 'runtime.yaml',
+  );
 
   Future<File> _profileFile(String id, String name) async {
     final dir = Directory('${(await _profilesRoot()).path}/$id');

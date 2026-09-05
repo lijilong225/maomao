@@ -53,8 +53,9 @@ class CoreProcessBackend extends CoreBackend {
   Future<bool> prepareVpn() async => true;
 
   @override
-  Future<void> validateConfig(String configPath) =>
-      _invoke<void>('validateConfig', {'configPath': configPath});
+  Future<void> validateConfig(CoreEngine engine, String configPath) => _invoke<
+    void
+  >('validateConfig', {'engine': engine.wireName, 'configPath': configPath});
 
   @override
   Future<String> convertSubscription(String raw) async =>
@@ -64,6 +65,10 @@ class CoreProcessBackend extends CoreBackend {
   Future<String> mergeConfig(String base, String patch) async =>
       await _invoke<String>('mergeConfig', {'base': base, 'patch': patch}) ??
       '';
+
+  @override
+  Future<String> convertToSingbox(String yaml) async =>
+      await _invoke<String>('convertToSingbox', {'yaml': yaml}) ?? '';
 
   @override
   Future<void> start(StartRequest request) =>

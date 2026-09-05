@@ -129,12 +129,16 @@
   "closeAllConnections": "Close all",
   "logsEmpty": "No logs yet.",
 
+  "sectionCore": "Core",
   "sectionTunnel": "Tunnel",
   "sectionPerAppProxy": "Per-app proxy",
   "sectionProfiles": "Profiles",
   "sectionDiagnostics": "Diagnostics",
   "sectionAppearance": "Appearance",
 
+  "coreEngine": "Proxy core",
+  "coreEngineSubtitle": "Profiles stay in the mihomo format and are converted for sing-box automatically",
+  "coreEngineReconnect": "Reconnect to switch the running core",
   "tunStack": "TUN stack",
   "ipv6": "IPv6",
   "ipv6Subtitle": "Route IPv6 traffic through the tunnel",

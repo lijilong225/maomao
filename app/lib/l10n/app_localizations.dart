@@ -506,6 +506,12 @@ abstract class AppLocalizations {
   /// **'No logs yet.'**
   String get logsEmpty;
 
+  /// No description provided for @sectionCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Core'**
+  String get sectionCore;
+
   /// No description provided for @sectionTunnel.
   ///
   /// In en, this message translates to:
@@ -535,6 +541,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Appearance'**
   String get sectionAppearance;
+
+  /// No description provided for @coreEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Proxy core'**
+  String get coreEngine;
+
+  /// No description provided for @coreEngineSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profiles stay in the mihomo format and are converted for sing-box automatically'**
+  String get coreEngineSubtitle;
+
+  /// No description provided for @coreEngineReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect to switch the running core'**
+  String get coreEngineReconnect;
 
   /// No description provided for @tunStack.
   ///

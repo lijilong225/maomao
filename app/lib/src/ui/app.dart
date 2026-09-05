@@ -55,7 +55,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     return Scaffold(
       appBar: AppBar(
         title: Text(titles[_index]),
-        actions: [if (_index == 1) const ProvidersMenuButton()],
+        // sing-box has no provider concept, so the menu would only ever be empty.
+        actions: [
+          if (_index == 1 && ref.watch(coreEngineProvider).supportsProviders)
+            const ProvidersMenuButton(),
+        ],
       ),
       body: _pages[_index],
       bottomNavigationBar: NavigationBar(

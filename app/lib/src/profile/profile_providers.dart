@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/controller_client.dart';
 import '../api/controller_models.dart';
+import '../core/core_models.dart';
 import '../core/core_providers.dart';
+import '../settings/settings_providers.dart';
 import 'config_outline.dart';
 import 'latency_probe.dart';
 import 'profile_models.dart';
@@ -173,11 +175,18 @@ class ProfileController extends StateNotifier<ProfileState> {
     );
   }
 
-  /// Produces the validated `runtime.yaml` path for the active profile.
-  Future<String> materializeActive({String? globalPatchYaml}) async {
+  /// Produces the validated runtime config path for the active profile.
+  Future<String> materializeActive({
+    required CoreEngine engine,
+    String? globalPatchYaml,
+  }) async {
     final profile = state.active;
     if (profile == null) throw StateError('No active profile');
-    return _repository.materialize(profile, globalPatchYaml: globalPatchYaml);
+    return _repository.materialize(
+      profile,
+      engine: engine,
+      globalPatchYaml: globalPatchYaml,
+    );
   }
 
   Profile? _find(String id) {
@@ -285,15 +294,17 @@ final offlineLatencyProvider =
 /// While the core runs it owns the selection; this mirror exists so a choice
 /// made with the tunnel down is not lost and can be replayed on the next start.
 class ProxySelectionController extends StateNotifier<Map<String, String>> {
-  ProxySelectionController(this._store, this._profileId) : super(const {}) {
+  ProxySelectionController(this._store, this._profileId, this._engine)
+    : super(const {}) {
     _restore();
   }
 
   final ProxySelectionStore _store;
   final String? _profileId;
+  final CoreEngine _engine;
 
   Future<void> _restore() async {
-    final stored = await _store.load(_profileId);
+    final stored = await _store.load(_profileId, _engine);
     if (!mounted || stored.isEmpty) return;
     // A choice made before the disk read finished wins.
     state = {...stored, ...state};
@@ -301,7 +312,7 @@ class ProxySelectionController extends StateNotifier<Map<String, String>> {
 
   Future<void> select(String group, String member) async {
     state = {...state, group: member};
-    await _store.save(_profileId, state);
+    await _store.save(_profileId, _engine, state);
   }
 
   /// Hands every remembered choice to the core; groups it no longer knows are
@@ -322,6 +333,7 @@ final proxySelectionProvider =
       final controller = ProxySelectionController(
         const ProxySelectionStore(),
         ref.watch(profileControllerProvider.select((state) => state.activeId)),
+        ref.watch(settingsControllerProvider.select((state) => state.engine)),
       );
       ref.listen(controllerClientProvider, (_, next) async {
         final client = next.valueOrNull;

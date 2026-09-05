@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/controller_client.dart';
 import '../api/controller_models.dart';
+import '../settings/settings_providers.dart';
 import 'core_backend.dart';
 import 'core_channel.dart';
 import 'core_models.dart';
@@ -60,9 +61,12 @@ final proxiesProvider = FutureProvider<ProxySnapshot>((ref) async {
   return client.snapshot();
 });
 
+/// Empty under sing-box, which has no provider concept and answers the mihomo
+/// provider endpoints with stubs.
 final proxyProvidersProvider = FutureProvider<List<ProxyProviderInfo>>((
   ref,
 ) async {
+  if (!ref.watch(coreEngineProvider).supportsProviders) return const [];
   final client = ref.watch(controllerClientProvider).valueOrNull;
   if (client == null) return const [];
   return client.proxyProviders();
@@ -71,6 +75,7 @@ final proxyProvidersProvider = FutureProvider<List<ProxyProviderInfo>>((
 final ruleProvidersProvider = FutureProvider<List<RuleProviderInfo>>((
   ref,
 ) async {
+  if (!ref.watch(coreEngineProvider).supportsProviders) return const [];
   final client = ref.watch(controllerClientProvider).valueOrNull;
   if (client == null) return const [];
   return client.ruleProviders();

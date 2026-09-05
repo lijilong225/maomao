@@ -83,7 +83,8 @@ object CoreBridge : Delegate {
     }
 
     /** Throws on invalid configuration; the caller should surface the message verbatim. */
-    fun validateConfig(configPath: String) = Bridge.validateConfig(configPath)
+    fun validateConfig(engine: String, configPath: String) =
+        Bridge.validateConfig(engine, configPath)
 
     /** Normalizes a raw subscription body (YAML or share links) into mihomo YAML. */
     fun convertSubscription(raw: String): String = Bridge.convertSubscription(raw)
@@ -92,12 +93,15 @@ object CoreBridge : Delegate {
     fun mergeConfig(baseYaml: String, patchYaml: String): String =
         Bridge.mergeConfig(baseYaml, patchYaml)
 
+    /** Translates a mihomo YAML config into a sing-box JSON config. */
+    fun convertToSingbox(yaml: String): String = Bridge.convertToSingbox(yaml)
+
     /**
      * TUN parameters derived from the config. The core narrows fake-ip-range to a
      * /30 and ignores host overrides, so the VpnService builder must mirror these.
      */
-    fun tunOptions(configPath: String): TunOptions {
-        val json = JSONObject(Bridge.tunOptions(configPath))
+    fun tunOptions(engine: String, configPath: String): TunOptions {
+        val json = JSONObject(Bridge.tunOptions(engine, configPath))
         return TunOptions(
             ipv4 = json.optString("ipv4").takeIf { it.isNotEmpty() },
             ipv6 = json.optString("ipv6").takeIf { it.isNotEmpty() },
@@ -106,8 +110,9 @@ object CoreBridge : Delegate {
         )
     }
 
-    fun start(configPath: String, tunFd: Int, tunStack: String, tunMtu: Int) {
+    fun start(engine: String, configPath: String, tunFd: Int, tunStack: String, tunMtu: Int) {
         val options = JSONObject()
+            .put("engine", engine)
             .put("configPath", configPath)
             .put("tunFd", tunFd)
             .put("tunStack", tunStack)

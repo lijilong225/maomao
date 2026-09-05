@@ -19,8 +19,8 @@ const _handoffTimeout = Duration(seconds: 8);
 
 /// Bridges profiles, settings and the core lifecycle.
 ///
-/// Connecting means: materialize `runtime.yaml` from the active profile plus the
-/// global override, then hand its path to the platform tunnel.
+/// Connecting means: materialize the runtime config from the active profile plus
+/// the global override, then hand its path to the platform tunnel.
 class TunnelController extends StateNotifier<TunnelStatus> {
   TunnelController(this._ref) : super(const TunnelStatus());
 
@@ -33,7 +33,10 @@ class TunnelController extends StateNotifier<TunnelStatus> {
       final settings = _ref.read(settingsControllerProvider);
       final configPath = await _ref
           .read(profileControllerProvider.notifier)
-          .materializeActive(globalPatchYaml: settings.overrideYaml);
+          .materializeActive(
+            engine: settings.engine,
+            globalPatchYaml: settings.overrideYaml,
+          );
 
       final service = _ref.read(coreServiceProvider);
       // Subscribed before the request so a core that reacts immediately cannot
@@ -81,7 +84,10 @@ class TunnelController extends StateNotifier<TunnelStatus> {
       final settings = _ref.read(settingsControllerProvider);
       final configPath = await _ref
           .read(profileControllerProvider.notifier)
-          .materializeActive(globalPatchYaml: settings.overrideYaml);
+          .materializeActive(
+            engine: settings.engine,
+            globalPatchYaml: settings.overrideYaml,
+          );
       await _ref
           .read(coreServiceProvider)
           .reload(_request(configPath, settings));
@@ -111,6 +117,7 @@ class TunnelController extends StateNotifier<TunnelStatus> {
   StartRequest _request(String configPath, AppSettings settings) =>
       StartRequest(
         configPath: configPath,
+        engine: settings.engine,
         profileName:
             _ref.read(profileControllerProvider).active?.name ?? 'maomao',
         tunStack: settings.tunStack,

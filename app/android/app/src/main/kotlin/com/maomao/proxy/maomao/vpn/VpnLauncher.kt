@@ -26,6 +26,7 @@ object VpnLauncher {
             action = MaomaoVpnService.ACTION_START
             putExtra(MaomaoVpnService.EXTRA_CONFIG_PATH, options.configPath)
             putExtra(MaomaoVpnService.EXTRA_PROFILE_NAME, profileName)
+            putExtra(MaomaoVpnService.EXTRA_ENGINE, options.engine)
             putExtra(MaomaoVpnService.EXTRA_TUN_STACK, options.tunStack)
             putStringArrayListExtra(
                 MaomaoVpnService.EXTRA_ALLOWED_APPS,
