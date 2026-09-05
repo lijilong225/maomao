@@ -219,6 +219,43 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileNotDownloaded => '该配置尚未下载。';
 
   @override
+  String get profileOptions => '配置选项';
+
+  @override
+  String get profileNameRequired => '名称不能为空。';
+
+  @override
+  String get subscriptionUrlRequired => '订阅链接不能为空。';
+
+  @override
+  String get subscriptionUrlHelper => '更改后会立即重新下载订阅';
+
+  @override
+  String get autoUpdate => '自动更新';
+
+  @override
+  String get autoUpdateHelper => '间隔到期后刷新订阅';
+
+  @override
+  String get autoUpdateOff => '关闭';
+
+  @override
+  String intervalHours(int count) {
+    return '$count 小时';
+  }
+
+  @override
+  String intervalDays(int count) {
+    return '$count 天';
+  }
+
+  @override
+  String get profileOverride => '配置覆写';
+
+  @override
+  String get profileOverrideHelper => '仅合并到该配置的 YAML 补丁';
+
+  @override
   String get tabConnections => '连接';
 
   @override

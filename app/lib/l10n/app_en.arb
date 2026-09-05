@@ -122,6 +122,27 @@
   "editProfile": "Edit config",
   "editProfileHelper": "Updating from the subscription URL overwrites these edits",
   "profileNotDownloaded": "This profile has not been downloaded yet.",
+  "profileOptions": "Profile options",
+  "profileNameRequired": "Name cannot be empty.",
+  "subscriptionUrlRequired": "Subscription URL cannot be empty.",
+  "subscriptionUrlHelper": "Changing it re-downloads the subscription right away",
+  "autoUpdate": "Auto-update",
+  "autoUpdateHelper": "Refresh the subscription once the interval elapses",
+  "autoUpdateOff": "Off",
+  "intervalHours": "{count} h",
+  "@intervalHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "intervalDays": "{count} d",
+  "@intervalDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "profileOverride": "Profile override",
+  "profileOverrideHelper": "YAML patch merged onto this profile only",
 
   "tabConnections": "Connections",
   "tabLogs": "Logs",

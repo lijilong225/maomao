@@ -476,6 +476,72 @@ abstract class AppLocalizations {
   /// **'This profile has not been downloaded yet.'**
   String get profileNotDownloaded;
 
+  /// No description provided for @profileOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile options'**
+  String get profileOptions;
+
+  /// No description provided for @profileNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name cannot be empty.'**
+  String get profileNameRequired;
+
+  /// No description provided for @subscriptionUrlRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription URL cannot be empty.'**
+  String get subscriptionUrlRequired;
+
+  /// No description provided for @subscriptionUrlHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing it re-downloads the subscription right away'**
+  String get subscriptionUrlHelper;
+
+  /// No description provided for @autoUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-update'**
+  String get autoUpdate;
+
+  /// No description provided for @autoUpdateHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh the subscription once the interval elapses'**
+  String get autoUpdateHelper;
+
+  /// No description provided for @autoUpdateOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get autoUpdateOff;
+
+  /// No description provided for @intervalHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h'**
+  String intervalHours(int count);
+
+  /// No description provided for @intervalDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} d'**
+  String intervalDays(int count);
+
+  /// No description provided for @profileOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile override'**
+  String get profileOverride;
+
+  /// No description provided for @profileOverrideHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'YAML patch merged onto this profile only'**
+  String get profileOverrideHelper;
+
   /// No description provided for @tabConnections.
   ///
   /// In en, this message translates to:

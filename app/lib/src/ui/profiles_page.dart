@@ -105,6 +105,10 @@ class _ProfileTile extends ConsumerWidget {
                           child: Text(l10n.actionUpdate),
                         ),
                       PopupMenuItem(
+                        value: 'options',
+                        child: Text(l10n.profileOptions),
+                      ),
+                      PopupMenuItem(
                         value: 'edit',
                         child: Text(l10n.actionEdit),
                       ),
@@ -150,6 +154,8 @@ class _ProfileTile extends ConsumerWidget {
       switch (action) {
         case 'update':
           await controller.update(profile.id);
+        case 'options':
+          await _openOptions(context);
         case 'edit':
           await _openEditor(context, ref);
         case 'rename':
@@ -164,6 +170,10 @@ class _ProfileTile extends ConsumerWidget {
       }
     }
   }
+
+  Future<void> _openOptions(BuildContext context) => Navigator.of(context).push(
+    MaterialPageRoute(builder: (_) => _ProfileOptionsPage(profile: profile)),
+  );
 
   Future<void> _rename(
     BuildContext context,
@@ -316,6 +326,209 @@ class _RenameDialogState extends State<_RenameDialog> {
         ),
         FilledButton(onPressed: _submit, child: Text(l10n.actionSave)),
       ],
+    );
+  }
+}
+
+/// Auto-update intervals the options page offers; null means off.
+const _autoUpdateChoices = <Duration?>[
+  null,
+  Duration(hours: 6),
+  Duration(hours: 12),
+  Duration(days: 1),
+  Duration(days: 3),
+  Duration(days: 7),
+];
+
+String _autoUpdateLabel(AppLocalizations l10n, Duration? interval) {
+  if (interval == null) return l10n.autoUpdateOff;
+  if (interval.inHours >= 24 && interval.inHours % 24 == 0) {
+    return l10n.intervalDays(interval.inDays);
+  }
+  return l10n.intervalHours(interval.inHours);
+}
+
+/// Everything about a profile except its config body: name, subscription URL,
+/// auto-update interval and the profile-scoped YAML override.
+class _ProfileOptionsPage extends ConsumerStatefulWidget {
+  const _ProfileOptionsPage({required this.profile});
+
+  final Profile profile;
+
+  @override
+  ConsumerState<_ProfileOptionsPage> createState() =>
+      _ProfileOptionsPageState();
+}
+
+class _ProfileOptionsPageState extends ConsumerState<_ProfileOptionsPage> {
+  late final TextEditingController _name = TextEditingController(
+    text: widget.profile.name,
+  );
+  late final TextEditingController _url = TextEditingController(
+    text: widget.profile.url ?? '',
+  );
+  late final TextEditingController _override = TextEditingController(
+    text: widget.profile.overrideYaml,
+  );
+  late Duration? _interval = widget.profile.autoUpdateInterval;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _url.dispose();
+    _override.dispose();
+    super.dispose();
+  }
+
+  void _complain(String message) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(message)));
+
+  Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
+    final profile = widget.profile;
+    final name = _name.text.trim();
+    final url = _url.text.trim();
+
+    if (name.isEmpty) {
+      _complain(l10n.profileNameRequired);
+      return;
+    }
+    if (profile.isRemote && url.isEmpty) {
+      _complain(l10n.subscriptionUrlRequired);
+      return;
+    }
+
+    final urlChanged = profile.isRemote && url != (profile.url ?? '');
+    final overrideChanged = _override.text != profile.overrideYaml;
+
+    setState(() => _saving = true);
+    final controller = ref.read(profileControllerProvider.notifier);
+    String? failure;
+    try {
+      if (name != profile.name) await controller.rename(profile.id, name);
+      if (_interval != profile.autoUpdateInterval) {
+        await controller.setAutoUpdate(profile.id, _interval);
+      }
+      if (overrideChanged) {
+        await controller.setOverride(profile.id, _override.text);
+      }
+      if (urlChanged) {
+        await controller.setUrl(profile.id, url);
+        // The stored body still belongs to the old subscription.
+        await controller.update(profile.id);
+      }
+      if ((urlChanged || overrideChanged) &&
+          ref.read(profileControllerProvider).activeId == profile.id) {
+        final tunnel = ref.read(tunnelControllerProvider.notifier);
+        await tunnel.applyConfigChanges();
+        // applyConfigChanges surfaces failures through its state, not by throwing.
+        failure = ref.read(tunnelControllerProvider).error;
+        if (failure != null) tunnel.clearError();
+      }
+    } catch (error) {
+      failure = '$error';
+    }
+    if (!mounted) return;
+    if (failure == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() => _saving = false);
+    _complain(failure);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final intervals = <Duration?>[
+      ..._autoUpdateChoices,
+      if (!_autoUpdateChoices.contains(_interval)) _interval,
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.profileOptions),
+        actions: [
+          IconButton(
+            icon: _saving
+                ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check),
+            tooltip: l10n.actionSave,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          TextField(
+            controller: _name,
+            enabled: !_saving,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              labelText: l10n.profileName,
+            ),
+          ),
+          if (widget.profile.isRemote) ...[
+            const SizedBox(height: 20),
+            TextField(
+              controller: _url,
+              enabled: !_saving,
+              keyboardType: TextInputType.url,
+              maxLines: 2,
+              minLines: 1,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: l10n.subscriptionUrl,
+                hintText: 'https://…',
+                helperText: l10n.subscriptionUrlHelper,
+                helperMaxLines: 2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.autoUpdate),
+              subtitle: Text(l10n.autoUpdateHelper),
+              trailing: DropdownButton<Duration?>(
+                value: _interval,
+                onChanged: _saving
+                    ? null
+                    : (value) => setState(() => _interval = value),
+                items: [
+                  for (final interval in intervals)
+                    DropdownMenuItem(
+                      value: interval,
+                      child: Text(_autoUpdateLabel(l10n, interval)),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          TextField(
+            controller: _override,
+            enabled: !_saving,
+            minLines: 4,
+            maxLines: 12,
+            style: const TextStyle(fontFamily: 'monospace'),
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              labelText: l10n.profileOverride,
+              alignLabelWithHint: true,
+              hintText: 'mode: rule',
+              helperText: l10n.profileOverrideHelper,
+              helperMaxLines: 2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

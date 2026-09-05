@@ -111,6 +111,7 @@ class Profile {
     bool clearAutoUpdate = false,
     DateTime? updatedAt,
     SubscriptionUserInfo? userInfo,
+    bool clearUserInfo = false,
   }) => Profile(
     id: id,
     name: name ?? this.name,
@@ -121,7 +122,7 @@ class Profile {
         ? null
         : (autoUpdateInterval ?? this.autoUpdateInterval),
     updatedAt: updatedAt ?? this.updatedAt,
-    userInfo: userInfo ?? this.userInfo,
+    userInfo: clearUserInfo ? null : (userInfo ?? this.userInfo),
   );
 
   /// [includeUrl] is false for the plain-preferences copy; the URL is stored

@@ -226,6 +226,46 @@ class AppLocalizationsEn extends AppLocalizations {
       'This profile has not been downloaded yet.';
 
   @override
+  String get profileOptions => 'Profile options';
+
+  @override
+  String get profileNameRequired => 'Name cannot be empty.';
+
+  @override
+  String get subscriptionUrlRequired => 'Subscription URL cannot be empty.';
+
+  @override
+  String get subscriptionUrlHelper =>
+      'Changing it re-downloads the subscription right away';
+
+  @override
+  String get autoUpdate => 'Auto-update';
+
+  @override
+  String get autoUpdateHelper =>
+      'Refresh the subscription once the interval elapses';
+
+  @override
+  String get autoUpdateOff => 'Off';
+
+  @override
+  String intervalHours(int count) {
+    return '$count h';
+  }
+
+  @override
+  String intervalDays(int count) {
+    return '$count d';
+  }
+
+  @override
+  String get profileOverride => 'Profile override';
+
+  @override
+  String get profileOverrideHelper =>
+      'YAML patch merged onto this profile only';
+
+  @override
   String get tabConnections => 'Connections';
 
   @override
